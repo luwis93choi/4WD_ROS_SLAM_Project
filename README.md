@@ -34,8 +34,8 @@
          * roslaunch turtlebot3_gazebo turtlebot3_world.launch (매우 느리니 기다려야함)
 ### 2.4. 키보드 조종
          * roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch
-### 2.5. rosrun map_server map_saver -f ~/map
-
+### 2.5. SLAM 결과 출력
+         * rosrun map_server map_saver -f ~/map
 ### 2.5. 각종 실행 에러 대응법
          (1) 없다고 에러 뜨는 모듈에 대해서는 별도 설치 진행
          (2) 없는 모듈 설치법 : sudo apt-get install ros-[버전 명칭]-[모듈 이름]
