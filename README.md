@@ -22,13 +22,19 @@
 
 
 ## 2. Turtlebot 3 실행
-### 2.1. 시뮬레이션 대상 결정 : export TURTLEBOT3_MODEL=burger (burger, waffle_pi 등)
-### 2.2. ROSCORE 실행 : roscore
-### 2.3. Gazebo World 로딩 : roslaunch turtlebot3_gazebo turtlebot3_world.launch (매우 느리니 기다려야함)
-### 2.4. 키보드 조종 : roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch
+### 2.1. 시뮬레이션 대상 결정
+         * export TURTLEBOT3_MODEL=burger (burger, waffle_pi 등)
+### 2.2. ROSCORE 실행 
+         * roscore
+### 2.3. Gazebo World 로딩
+         * roslaunch turtlebot3_gazebo turtlebot3_world.launch (매우 느리니 기다려야함)
+### 2.4. 키보드 조종
+         * roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch
 ### 2.5. rosrun map_server map_saver -f ~/map
-         * 없다고 에러 뜨는 모듈에 대해서는 별도 설치 진행
-         * 없는 모듈 설치법 : sudo apt-get install ros-[버전 명칭]-[모듈 이름]
+
+### 2.5. 각종 실행 에러 대응법
+         (1) 없다고 에러 뜨는 모듈에 대해서는 별도 설치 진행
+         (2) 없는 모듈 설치법 : sudo apt-get install ros-[버전 명칭]-[모듈 이름]
            * Kinetic 버전 rosserial_python ---> sudo apt-get install ros-kinetic-rosserial-python
            * Kinetic 버전 hls_lfcd_lds_driver (레이저 스캐너 드라이버 모듈) ---> sudo apt-get install ros-kinetic-hls-lfcd-lds-driver
            * Kinetic 버전 gmapping ---> sudo apt-get install ros-kinetic-gmapping
