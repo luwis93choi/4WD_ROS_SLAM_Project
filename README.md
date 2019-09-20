@@ -5,9 +5,9 @@
 # 참조자료 : 
 
 # 2019.09.20.
-1. Turtlebot 3 설치
-> 1) 아래 사항에 따라서 기본 준비 실시
-      (1) 소프트웨어 준비
+##1. Turtlebot 3 설치
+###1.1. 아래 사항에 따라서 기본 준비 실시
+####1.1.1. 소프트웨어 준비
          • http://emanual.robotis.com/docs/en/platform/turtlebot3/pc_setup/
          • http://emanual.robotis.com/docs/en/platform/turtlebot3/sbc_setup/
          • http://emanual.robotis.com/docs/en/platform/turtlebot3/opencr_setup/
