@@ -12,14 +12,15 @@
          • http://emanual.robotis.com/docs/en/platform/turtlebot3/sbc_setup/
          • http://emanual.robotis.com/docs/en/platform/turtlebot3/opencr_setup/
 
-#### 1.1.2. Turtlebot 3 패키지
-         • https://github.com/ROBOTIS-GIT/turtlebot3 --- 
-         • https://github.com/ROBOTIS-GIT/turtlebot3_msgs
-         • https://github.com/ROBOTIS-GIT/turtlebot3_simulations
-         • https://github.com/ROBOTIS-GIT/turtlebot3_applications
-         • https://github.com/ROBOTIS-GIT/turtlebot3_applications_msgs
+#### 1.1.2. Turtlebot 3 패키지 준비
+         • https://github.com/ROBOTIS-GIT/turtlebot3 --- git clone 또는 다운로드를 해서 catkin_ws의 src에 저장함
+         • https://github.com/ROBOTIS-GIT/turtlebot3_msgs --- git clone 또는 다운로드를 해서 catkin_ws의 src에 저장함
+         • https://github.com/ROBOTIS-GIT/turtlebot3_simulations --- git clone 또는 다운로드를 해서 catkin_ws의 src에 저장함
+         • https://github.com/ROBOTIS-GIT/turtlebot3_applications --- git clone 또는 다운로드를 해서 catkin_ws의 src에 저장함
+         • https://github.com/ROBOTIS-GIT/turtlebot3_applications_msgs --- git clone 또는 다운로드를 해서 catkin_ws의 src에 저장함
 
-
+### 1.1.3. Turtlebot 3 패키지 빌드
+         • catkin_make (* 빌드를 해야지 roslaunch 사용 가능 --- roslaunch를 사용하면 catkin_ws )
 
 ## 2. Turtlebot 3 실행
 ### 2.1. 시뮬레이션 대상 결정
