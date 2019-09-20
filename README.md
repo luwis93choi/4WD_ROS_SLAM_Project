@@ -2,7 +2,7 @@
 
 # Target Example : Turtlebot3 SLAM + Gazebo + RViz
 
-# 참조자료 : 
+# 참고자료 : https://github.com/robotpilot/ros-seminar
 
 # 2019.09.20.
 ## 1. Turtlebot 3 설치
