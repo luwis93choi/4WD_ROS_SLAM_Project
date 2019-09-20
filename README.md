@@ -20,7 +20,8 @@
          • https://github.com/ROBOTIS-GIT/turtlebot3_applications_msgs --- git clone 또는 다운로드를 해서 catkin_ws의 src에 저장함
 
 ### 1.1.3. Turtlebot 3 패키지 빌드
-         • catkin_make (* 빌드를 해야지 roslaunch 사용 가능 --- roslaunch를 사용하면 catkin_ws )
+         • catkin_make 
+           (* 빌드를 해야지 roslaunch 사용 가능 --- roslaunch를 사용하면 catkin_ws 및 ros 설치 디렉토리를 탐색함)
 
 ## 2. Turtlebot 3 실행
 ### 2.1. 시뮬레이션 대상 결정
