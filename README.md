@@ -11,7 +11,8 @@
          • http://emanual.robotis.com/docs/en/platform/turtlebot3/pc_setup/
          • http://emanual.robotis.com/docs/en/platform/turtlebot3/sbc_setup/
          • http://emanual.robotis.com/docs/en/platform/turtlebot3/opencr_setup/
-      (2) Turtlebot3 패키지
+
+#### 1.1.2. Turtlebot 3 패키지
          • https://github.com/ROBOTIS-GIT/turtlebot3 --- 
          • https://github.com/ROBOTIS-GIT/turtlebot3_msgs
          • https://github.com/ROBOTIS-GIT/turtlebot3_simulations
