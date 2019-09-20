@@ -29,8 +29,8 @@
    
    * 없다고 에러 뜨는 모듈에 대해서는 별도 설치 진행
    * 없는 모듈 설치법 : sudo apt-get install ros-[버전 명칭]-[모듈 이름]
-     ex : Kinetic 버전 rosserial_python ---> sudo apt-get install ros-kinetic-rosserial-python
-          Kinetic 버전 hls_lfcd_lds_driver (레이저 스캐너 드라이버 모듈) ---> sudo apt-get install ros-kinetic-hls-lfcd-lds-driver
-          Kinetic 버전 gmapping ---> sudo apt-get install ros-kinetic-gmapping
-          Kinetic 버전 map_server ---> sudo apt-get install ros-kinetic-map-server
-          *** gmapping은 Kinetic까지만 지원되고 Melodian에서는 Google Cartographer 지원
+     -ex : Kinetic 버전 rosserial_python ---> sudo apt-get install ros-kinetic-rosserial-python
+     -ex : Kinetic 버전 hls_lfcd_lds_driver (레이저 스캐너 드라이버 모듈) ---> sudo apt-get install ros-kinetic-hls-lfcd-lds-driver
+     -ex : Kinetic 버전 gmapping ---> sudo apt-get install ros-kinetic-gmapping
+     -ex : Kinetic 버전 map_server ---> sudo apt-get install ros-kinetic-map-server
+           (gmapping은 Kinetic까지만 지원되고 Melodian에서는 Google Cartographer 지원)
