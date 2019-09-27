@@ -3,15 +3,15 @@
 # Target Example : USB_CAM
 
 ### 참고자료 : http://wiki.ros.org/usb_cam
-###           https://github.com/ros-drivers/usb_cam
-###           http://wiki.ros.org/image_transport
-###           http://wiki.ros.org/libuvc_camera
-###           http://wiki.ros.org/uvc_camera
-###           https://msadowski.github.io/ros-web-tutorial-pt2-cameras/
-###           http://chofukutomi.blogspot.com/2017/01/usb-camera-ros-kinetic-ubuntu-1604.html
-###           https://cafe.naver.com/openrt/5963
-###           https://answers.ros.org/question/131331/usb_cam-errorwebcam-expected-picture-but-didnt-get-it/
-###           https://medium.com/@petehouston/check-usb-camera-supported-output-format-on-linux-1572a28f93c9
+###          > https://github.com/ros-drivers/usb_cam
+###          > http://wiki.ros.org/image_transport
+###          > http://wiki.ros.org/libuvc_camera
+###          > http://wiki.ros.org/uvc_camera
+###          > https://msadowski.github.io/ros-web-tutorial-pt2-cameras/
+###          > http://chofukutomi.blogspot.com/2017/01/usb-camera-ros-kinetic-ubuntu-1604.html
+###          > https://cafe.naver.com/openrt/5963
+###          > https://answers.ros.org/question/131331/usb_cam-errorwebcam-expected-picture-but-didnt-get-it/
+###          > https://medium.com/@petehouston/check-usb-camera-supported-output-format-on-linux-1572a28f93c9
 
 # 2019.09.26.
 ## 1. About ROS USB Camera
