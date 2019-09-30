@@ -43,12 +43,20 @@
 
 ### 1.2. Installation Debugging
 
-- *ModuleNotFoundError: No module named 'apt_pkg'* Error Debugging
+- **ModuleNotFoundError: No module named 'apt_pkg'** Error Debugging
 
   This error occurs, mainly because the library "apt_pkg.cpython-35m-x86_64-linux-gnu.so" is not present in /usr/lib/python3/dist-package. Another possible reason is that there are multiple versions of Python installed in the system. In order to handle this error. Following methods are recommended.
 
    - Copying the necessary library files
 
-      - cd /usr/lib/python3/dist-packages
+      - **cd /usr/lib/python3/dist-packages**
 
-      - sudo cp apt_pkg.cpython-35m-x86_64-linux-gnu.so apt_pkg.so
+      - **sudo cp apt_pkg.cpython-35m-x86_64-linux-gnu.so apt_pkg.so**
+
+
+   - Reinstalling related packages
+
+      - **sudo apt-get install --reinstall python3-software-properties-common**
+
+      - **sudo apt-get install --reinstall python-apt pyhton3-apt**
+
