@@ -37,7 +37,9 @@
 
          sub 4096R/F273FCD8 2017-02-22
 
-         * sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" : Add the repository to the system
+- **sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"**
+
+  : Add the repository to the system
 
 ### 1.2. Installation Debugging
 
