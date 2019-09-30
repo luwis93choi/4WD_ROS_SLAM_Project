@@ -16,13 +16,21 @@
 - **sudo apt-get update**
   
   : Update apt-get package lists
-         * sudo apt-get install apt-transport-https ca-certificates curl software-properties-common : Permit apt-get to access Docker repository through HTTPS
-         * curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-ke add - : Add Docker's official GPG key
-         * sudo apt-key fingerprint 0EBF7CD88 : Validate the key (If you see the fingerprint below, it is ready to move to the next step)
-#### pub 4096R/0EBFCD88 2017-02-22
-####     Key fingerprint = 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88
-####     uid Docker Release (CE deb)
-####     sub 4096R/F273FCD8 2017-02-22
+         
+- **sudo apt-get install apt-transport-https ca-certificates curl software-properties-common** 
+
+  : Permit apt-get to access Docker repository through HTTPS
+         
+- **curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-ke add -**
+  : Add Docker's official GPG key
+         
+- **sudo apt-key fingerprint 0EBF7CD88**
+  : Validate the key (If you see the fingerprint below, it is ready to move to the next step)
+
+> pub 4096R/0EBFCD88 2017-02-22
+> Key fingerprint = 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88
+> uid Docker Release (CE deb)
+> sub 4096R/F273FCD8 2017-02-22
 
          * sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" : Add the repository to the system
 
