@@ -10,8 +10,8 @@
 # 2019.09.30.
 ## 1. Docker Installation / Installation Debugging
 ### 1.1. Docker Installation
-**sudo apt-get remove docker docker-engine docker.io** : Old Docker Cleanup / Remove all the older, obsolete, incompatible versions of Docker
-         * sudo apt-get update : Update apt-get package lists
+- **sudo apt-get remove docker docker-engine docker.io** : Old Docker Cleanup / Remove all the older, obsolete, incompatible versions of Docker
+- **sudo apt-get update** : Update apt-get package lists
          * sudo apt-get install apt-transport-https ca-certificates curl software-properties-common : Permit apt-get to access Docker repository through HTTPS
          * curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-ke add - : Add Docker's official GPG key
          * sudo apt-key fingerprint 0EBF7CD88 : Validate the key (If you see the fingerprint below, it is ready to move to the next step)
