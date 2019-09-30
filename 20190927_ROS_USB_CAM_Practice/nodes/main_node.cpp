@@ -9,24 +9,45 @@ Supported data types in ROS message : http://wiki.ros.org/msg
 Multiple publishers and subscribers in one node : https://gist.github.com/PrieureDeSion/77c109a074573ce9d13da244e5f82c4d
 
 How to build only one package from catkin_make : https://answers.ros.org/question/54178/how-to-build-just-one-package-using-catkin_make/
+
+How to setup git for Linux : https://yokang90.tistory.com/47
 */
 
-#include "ros/ros.h"
-#include "ros_usb_cam_practice/main_node_msg.h"
+#include <ros/ros.h>
+#include <ros_usb_cam_practice/main_node_msg.h>
 
-#include "usb_cam/usb_cam.h"
-#include "image_transport/image_transport.h"
-#include "camera_info_manager/camera_info_manager.h"
-#include "sstream"
-#include "std_srvs/Empty.h"
+// usb_cam related libraries /////////////////////////
+#include <usb_cam/usb_cam.h>
+#include <image_transport/image_transport.h>
+#include <camera_info_manager/camera_info_manager.h>
+#include <sstream>
+#include <std_srvs/Empty.h>
+//////////////////////////////////////////////////////
+
+// OpenCV related libraries /////////////////////////
+#include <cv_bridge/cv_bridge.h>
+#include <opencv2/opencv.hpp>
+#include <iostream>
+#include <opencv2/highgui.hpp>
+#include <sensor_msgs/image_encodings.h>
+#include <opencv2/imgproc/imgproc.hpp>
+/////////////////////////////////////////////////////
 
 int image_RX_count = 0;
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg){
 
+    cv_bridge::CvImagePtr cv_ptr;
+
     image_RX_count++;
     ROS_INFO("imageCallback call count : %d", image_RX_count);
-    //ROS_INFO("[Image height : %d] [Image width : %d] [Image encoding : %s]", msg->height, msg->width, msg->encoding);
+    ROS_INFO("[Image height : %d] [Image width : %d] [Image encoding : %s] \n", msg->height, msg->width, msg->encoding());
+
+    // Use 'cv_bridge' and its 'toCvCopy' in order to convert ROS msgs Image into OpenCV image
+    cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+
+    cv::imshow("USB CAM image", cv_ptr->image); // Actual image data is stored in 'image' member
+    cv::waitKey(3);
 }
 
 int main(int argc, char **argv){
@@ -55,6 +76,7 @@ int main(int argc, char **argv){
         loop_rate.sleep();
     }
 
+    cv::destroyWindow("USB CAM image");
 
     return 0;
 }

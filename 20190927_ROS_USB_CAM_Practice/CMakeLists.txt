@@ -15,12 +15,19 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   sensor_msgs
   camera_info_manager
+
+  # OpenCV specific required packages
+  OpenCV
+  cv_bridge
 )
 
 ## pkg-config libraries
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(avcodec libavcodec REQUIRED)
 pkg_check_modules(swscale libswscale REQUIRED)
+
+## OpenCV requirement
+find_package(OpenCV REQUIRED)
 
 ## Declare messages
 add_message_files(FILES main_node_msg.msg)
@@ -60,9 +67,9 @@ target_link_libraries(
   ${swscale_LIBRARIES}
 )
 
-add_executable(${PROJECT_NAME}_node nodes/usb_cam_node.cpp)
+add_executable(${PROJECT_NAME}_CAMnode nodes/usb_cam_node.cpp)
 target_link_libraries(
-  ${PROJECT_NAME}_node
+  ${PROJECT_NAME}_CAMnode
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${avcodec_LIBRARIES}
@@ -70,8 +77,12 @@ target_link_libraries(
 )
 ################################################################################
 
+#### OpenCV related ############################################################
+include_directories(${OpenCV_INCLUDE_DIRS})
+################################################################################
+
 add_executable(main_node nodes/main_node.cpp)
 add_dependencies(
   main_node ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS})
-target_link_libraries(main_node ${catkin_LIBRARIES})
+target_link_libraries(main_node ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}) # OpenCV Library path is included since main_node.cpp will use OpenCV library

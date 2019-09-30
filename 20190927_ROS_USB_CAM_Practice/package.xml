@@ -21,11 +21,16 @@
   <build_depend>camera_info_manager</build_depend>
   <!-- -->
 
+  <!-- OpenCV specific build requirement -->
+  <build_depend>OpenCV</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <!-- -->
+
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
   
 
-  <!-- usb_came module specific build requirements-->
+  <!-- usb_came module specific execution requirements-->
   <exec_depend>image_transport</exec_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>std_msgs</exec_depend>
@@ -34,6 +39,11 @@
   <exec_depend>ffmpeg</exec_depend>
   <exec_depend>camera_info_manager</exec_depend>
   <exec_depend>v4l-utils</exec_depend>
+  <!-- -->
+
+  <!-- OpenCV specific execution requirement -->
+  <exec_depend>OpenCV</exec_depend>
+  <exec_depend>cv_bridge</exec_depend>
   <!-- -->
 
   <exec_depend>roscpp</exec_depend>
