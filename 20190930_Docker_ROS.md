@@ -86,64 +86,64 @@
 
 - **Open platform for developing, shipping, and running applications**
   
-  : You can separate your applications from your infrastructure so you can deliver software quickly
+  You can separate your applications from your infrastructure so you can deliver software quickly
 
-  : With Docker, you can manage your infrastructure in the same ways you manage your applications.
+  With Docker, you can manage your infrastructure in the same ways you manage your applications.
 
-  : With Docker, you can apply newly patched programs into service while running the current one to keep the service going. (**CI/CD : Continious Integration / Continious Delivery**)
+  With Docker, you can apply newly patched programs into service while running the current one to keep the service going. (**CI/CD : Continious Integration / Continious Delivery**)
 
-  : Docker is based on GO and Linux Kernel.
+  Docker is based on GO and Linux Kernel.
 
 - **Lightweight & Highly-Portable & Highly-Resourceful Platform**
   
-  : Docker runs its containers (Image instances) with much less resources and overhead than VM (Virtual Machines). This is because unlike VM, which virtualizes the entire HW architecture of Guest OS and manages resources through hypervisor, Docker isolates its containers as a process and run them directly with host OS kernel. Docker calls system calls from host OS kernel to run the programs in the containers.
+  Docker runs its containers (Image instances) with much less resources and overhead than VM (Virtual Machines). This is because unlike VM, which virtualizes the entire HW architecture of Guest OS and manages resources through hypervisor, Docker isolates its containers as a process and run them directly with host OS kernel. Docker invokes system calls from host OS kernel to run the programs in the containers.
 
-  : Docker is highly portable, because they are packaged in standardized forms, containers and images.
+  Docker is highly portable, because they are packaged in standardized forms, containers and images.
 
-  : Docker is highly resourceful, because Docker Hub houses many images that users can implement into their system.
+  Docker is highly resourceful, because Docker Hub houses many images that users can implement into their system.
 
 - **Docker daemon**
 
-  : Docker daemon interacts with its user through Docker API requests and manages Docker objects, such as images, containers, networks, and volumes.
+  Docker daemon interacts with its user through Docker API requests and manages Docker objects, such as images, containers, networks, and volumes.
 
 - **Image**
   
-  : Read-only (Immutable) template with instructions for Docker container
+  Read-only (Immutable) template with instructions for Docker container
 
-  : Image contains OS image setting along with application program's codes, resources, and libraries.
+  Image contains OS image setting along with application program's codes, resources, and libraries.
 
-  : Image can be managed and built on Dockerfile. It is composed of many layers of instructions and functions.
+  Image can be managed and built on Dockerfile. It is composed of many layers of instructions and functions.
 
 - **Container**
   
-  : Instance of Docker Image
+  Instance of Docker Image
 
-  : Containers can be changed (Mutable) by its users. Containers are sandoxed environment that can be processed through direct system calls.
+  Containers can be changed (Mutable) by its users. Containers are sandoxed environment that can be processed through direct system calls.
 
-  : Containers are usually well-isolated from other containers and host machine. Users can re-define and adjust isolation level through "namespace" technology.
+  Containers are usually well-isolated from other containers and host machine. Users can re-define and adjust isolation level through "namespace" technology.
 
 ### 2.2. Running ROS on Docker and its limitations
 
 - **ROS Docker**
   
-  : Users can run various versions of ROS on Docker through ROS Docker images.
+  Users can run various versions of ROS on Docker through ROS Docker images.
 
-  : Installation methods - http://wiki.ros.org/docker/Tutorials/Docker
+  Installation methods - http://wiki.ros.org/docker/Tutorials/Docker
 
 - **ROS Docker's limitations**
   
-  : Docker cannot run GUI-based programs or windows. As a result, any GUI-based events or windows will cause errors when running ROS programs. In order to handle this issue, the user can indirectly access GUI through Xserver (http://wiki.ros.org/docker/Tutorials/GUI)
+  Docker cannot run GUI-based programs or windows. As a result, any GUI-based events or windows will cause errors when running ROS programs. In order to handle this issue, the user can indirectly access GUI through Xserver (http://wiki.ros.org/docker/Tutorials/GUI)
 
-  : Docker is not appropriate when developing high-end single unit of robot. This is because Docker is designed for infrastructure elements, such as servers, rather than client elements. As a result, Docker is more appropriate when developing server elements of the system.
+  Docker is not appropriate when developing high-end single unit of robot. This is because Docker is designed for infrastructure elements, such as servers, rather than client elements. As a result, Docker is more appropriate when developing server elements of the system.
 
 ### 2.2. Questions Regarding Docker's compatiblities against HW specifications or Kernel versions
 
 - **Docker is not Magic**
 
-  : Although Docker can run various versions of OS and images on different versions of OS. It is not perfect. This is ultimately dependent on HW specifications, especially Kernel versions.
+  Although Docker can run various versions of OS and images on different versions of OS. It is not perfect. This is ultimately dependent on HW specifications, especially Kernel versions.
 
-  : Since all the Docker containers run on system calls from host OS kernels, if the containers try to call for obsolete or non-existant system calls from host OS, the container will face severe system error.
+  Since all the Docker containers run on system calls from host OS kernels, if the containers try to call for obsolete or non-existant system calls from host OS, the container will face severe system error.
 
-  : Thanks to Docker's highly active open-source community activities, Docker's containers are properly maintained to support numerous versions of OS and kernels. However, if there is a major shift in OS system or kernels, engineers will face to conduct major changes to their containers. Through continuous maintenance, Docker can accomplish Continious Integration / Continious Delivery.
+  Thanks to Docker's highly active open-source community activities, Docker's containers are properly maintained to support numerous versions of OS and kernels. However, if there is a major shift in OS system or kernels, engineers will face to conduct major changes to their containers. Through continuous maintenance, Docker can accomplish Continious Integration / Continious Delivery.
 
 
