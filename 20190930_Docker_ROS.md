@@ -84,7 +84,7 @@
 ## 2. Docker - Its characteristics
 ### 2.1. Docker's major characteristics
 
-https://github.com/luwis93choi/ROS_SLAM_Project/issues/1#issue-503870102
+![Docker - Concept](https://user-images.githubusercontent.com/10843389/66374864-ee396700-e9e6-11e9-95be-8e0105aae615.PNG)
 
 - **Open platform for developing, shipping, and running applications**
   
