@@ -97,6 +97,7 @@
   Docker is based on GO and Linux Kernel.
 
 - **Lightweight & Highly-Portable & Highly-Resourceful Platform**
+![Docker - Concept](https://user-images.githubusercontent.com/10843389/66374864-ee396700-e9e6-11e9-95be-8e0105aae615.PNG)
   
   Docker runs its containers (Image instances) with much less resources and overhead than VM (Virtual Machines). This is because unlike VM, which virtualizes the entire HW architecture of Guest OS and manages resources through hypervisor, Docker isolates its containers as a process and run them directly with host OS kernel. Docker invokes system calls from host OS kernel to run the programs in the containers.
 
