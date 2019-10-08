@@ -98,7 +98,6 @@
 
 - **Lightweight & Highly-Portable & Highly-Resourceful Platform**
 ![Docker - System Architecture](https://user-images.githubusercontent.com/10843389/66374962-29d43100-e9e7-11e9-8f7c-958cfe224496.PNG)
-  
   Docker runs its containers (Image instances) with much less resources and overhead than VM (Virtual Machines). This is because unlike VM, which virtualizes the entire HW architecture of Guest OS and manages resources through hypervisor, Docker isolates its containers as a process and run them directly with host OS kernel. Docker invokes system calls from host OS kernel to run the programs in the containers.
 
   Docker is highly portable, because they are packaged in standardized forms, containers and images.
