@@ -1,17 +1,26 @@
 /*
-image_transport reference : http://wiki.ros.org/image_transport
+ * catkin_build command : catkin_make --only-pkg-with-deps ros_usb_cam_practice
+ * rosrun command : rosrun ros_usb_cam_practice main_node
+ *                  rosrun ros_usb_cam_practice ros_usb_cam_practice_CAMnode
+
+ * image_transport reference : http://wiki.ros.org/image_transport
                             https://docs.ros.org/api/image_transport/html/classimage__transport_1_1CameraSubscriber.html
 
-sensor_msgs/Image reference : http://docs.ros.org/melodic/api/sensor_msgs/html/msg/Image.html
 
-Supported data types in ROS message : http://wiki.ros.org/msg
+ * sensor_msgs/Image reference : http://docs.ros.org/melodic/api/sensor_msgs/html/msg/Image.html
 
-Multiple publishers and subscribers in one node : https://gist.github.com/PrieureDeSion/77c109a074573ce9d13da244e5f82c4d
 
-How to build only one package from catkin_make : https://answers.ros.org/question/54178/how-to-build-just-one-package-using-catkin_make/
+ * Supported data types in ROS message : http://wiki.ros.org/msg
 
-How to setup git for Linux : https://yokang90.tistory.com/47
-*/
+
+ * Multiple publishers and subscribers in one node : https://gist.github.com/PrieureDeSion/77c109a074573ce9d13da244e5f82c4d
+
+
+ * How to build only one package from catkin_make : https://answers.ros.org/question/54178/how-to-build-just-one-package-using-catkin_make/
+
+
+ * How to setup git for Linux : https://yokang90.tistory.com/47
+ */
 
 #include <ros/ros.h>
 #include <ros_usb_cam_practice/main_node_msg.h>
