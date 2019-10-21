@@ -84,6 +84,8 @@
 ## 2. Docker - Its characteristics
 ### 2.1. Docker's major characteristics
 
+![Docker - Concept](https://user-images.githubusercontent.com/10843389/66374864-ee396700-e9e6-11e9-95be-8e0105aae615.PNG)
+
 - **Open platform for developing, shipping, and running applications**
   
   You can separate your applications from your infrastructure so you can deliver software quickly
@@ -95,7 +97,7 @@
   Docker is based on GO and Linux Kernel.
 
 - **Lightweight & Highly-Portable & Highly-Resourceful Platform**
-  
+![Docker - System Architecture](https://user-images.githubusercontent.com/10843389/66374962-29d43100-e9e7-11e9-8f7c-958cfe224496.PNG)
   Docker runs its containers (Image instances) with much less resources and overhead than VM (Virtual Machines). This is because unlike VM, which virtualizes the entire HW architecture of Guest OS and manages resources through hypervisor, Docker isolates its containers as a process and run them directly with host OS kernel. Docker invokes system calls from host OS kernel to run the programs in the containers.
 
   Docker is highly portable, because they are packaged in standardized forms, containers and images.
