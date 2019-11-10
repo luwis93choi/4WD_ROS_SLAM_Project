@@ -42,7 +42,7 @@
 #include <string.h>
 
 // Libraries for OpenCV
-#include <cv_brige/cv_brige.h>
+#include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <sensor_msgs/image_encodings.h>
@@ -62,7 +62,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg){
     image_RX_count++;   // Increase the number if image is received
 
     ROS_INFO("imageCallback call count : %d", image_RX_count);
-    ROS_INFO("[Image height : %d] [Image width : %d] [Image encoding : %s] \n", msg->height, msg->widht, msg->ending());
+    ROS_INFO("[Image height : %d] [Image width : %d] [Image encoding : %s] \n", msg->height, msg->widht, msg->encoding());
 
     // Use 'cv_bridge' and its 'toCvCopy' in order to convert ROS msgs Image into OpenCV Image
     cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
