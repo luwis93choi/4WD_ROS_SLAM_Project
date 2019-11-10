@@ -62,7 +62,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg){
     image_RX_count++;   // Increase the number if image is received
 
     ROS_INFO("imageCallback call count : %d", image_RX_count);
-    ROS_INFO("[Image height : %d] [Image width : %d] [Image encoding : %s] \n", msg->height, msg->widht, msg->encoding());
+    ROS_INFO("[Image height : %d] [Image width : %d] [Image encoding : %s] \n", msg->height, msg->width, msg->encoding.data.c_str());
 
     // Use 'cv_bridge' and its 'toCvCopy' in order to convert ROS msgs Image into OpenCV Image
     cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
