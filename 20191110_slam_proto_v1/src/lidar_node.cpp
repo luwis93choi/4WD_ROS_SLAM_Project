@@ -26,7 +26,7 @@
  * 
  * Installation : "sudo apt-get install ros-<ros-distro>-rplidar-ros" (ex : sudo apt-get install ros-kinetic-rplidar-ros (for ROS Kinetic))
  * 
- * Running usb_cam_node : "rosrun rplidar_ros rpliarNode" 
+ * Running rpliarNode : "rosrun rplidar_ros rpliarNode" 
  */
 
 #include <ros/ros.h>
