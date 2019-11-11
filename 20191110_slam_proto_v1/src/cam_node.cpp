@@ -48,7 +48,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/imgproc/imgproc.hpp>
 
-int image_RX_count; // Number of received images
+int image_RX_count = 0; // Number of received images
 
 // This callback function will be invoked if image subscriber receives images.
 // This function receives images as sensor messages
@@ -62,7 +62,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg){
     image_RX_count++;   // Increase the number if image is received
 
     ROS_INFO("imageCallback call count : %d", image_RX_count);
-    ROS_INFO("[Image height : %d] [Image width : %d] [Image encoding : %s] \n", msg->height, msg->width, msg->encoding.data.c_str());
+    ROS_INFO("[Image height : %d] [Image width : %d] \n", msg->height, msg->width);
 
     // Use 'cv_bridge' and its 'toCvCopy' in order to convert ROS msgs Image into OpenCV Image
     cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
@@ -92,7 +92,7 @@ int main(int argc, char** argv){
 
     // Through ImageTransport, image data is delivered as messages.
     // As a result, in order for the node to receive the image data, it has to subscribe the image just as it does for receiving standard messages from other nodes.
-    image_transport::Subscriber sub = it.subscribe("/usb_cam/image_raw", 1000, imageCallback);
+    image_transport::Subscriber sub = it.subscribe("/usb_cam_node/image_raw", 1000, imageCallback);
 
     // When image subscriber receives images, it will invoke imageCallback function defined above.
 

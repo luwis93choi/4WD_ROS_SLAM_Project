@@ -17,15 +17,15 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>std_srvs</build_depend>
-
   <!--usb_cam package specific build requirements-->
   <build_depend>image_transport</build_depend>
   <build_depend>ffmpeg</build_depend>
   <build_depend>camera_info_manager</build_depend>
-  
+  <!--*******************************************-->
   <!--OpenCV specific build requirement-->
   <build_depend>OpenCV</build_depend>
   <build_depend>cv_bridge</build_depend>
+  <!--*******************************************-->
 
   <build_export_depend>rosconsole</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>

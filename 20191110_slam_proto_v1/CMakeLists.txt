@@ -41,6 +41,7 @@ include_directories(include
   ${catkin_INCLUDE_DIRS}
   ${avcodec_INCLUDE_DIRS}
   ${swscale_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 # cam_node executable declaration
@@ -50,10 +51,10 @@ add_dependencies(
            ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(
-  cam_node ${PROJECT_NAME}
-           ${catkin_LIBRARIES}
+  cam_node ${catkin_LIBRARIES}
            ${avcodec_LIBRARIES}
            ${swscale_LIBRARIES}
+           ${OpenCV_LIBRARIES}
 )
 
 # lidar_node executable declaration
