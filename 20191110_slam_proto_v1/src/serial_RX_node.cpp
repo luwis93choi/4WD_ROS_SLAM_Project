@@ -17,13 +17,13 @@
  */
 
 #include <ros/ros.h>
-#include <std_msgs/String.h>
+#include <std_msgs/Int32.h>
 
 // This callback function will be invoked if the subscriber receives data from serial_node.py
 // This function receives serial data as standard String message
-void arduino_RX_Callback(const std_msgs::String& msg){
+void arduino_RX_Callback(const std_msgs::Int32& msg){
 
-    ROS_INFO("Arduino RX Message : %s", msg.data.c_str());
+    ROS_INFO("Arduino RX Message : %d", msg.data);
     // String message data is stored in 'data' member variable
     // Use c_str() in order to convert it into string value for CLI print
 }
