@@ -40,11 +40,20 @@ int main(int argc, char** argv){
     // Receiving messages from serial_node.py will invoke arduino_RX_Callback function
     ros::Subscriber arduino_subscriber = nh.subscribe("encoder", 1000, arduino_RX_Callback);
 
+    std_msgs::Int32 servo_ctrl_msg; // Declare standard Int32 message for servo control
+    // Declare the publisher that will convey servo contrl value through Int32 message and serial port
+    ros::Publisher servo_control = nh.advertise<std_msgs::Int32>("servo_ctrl", 10); 
+    servo_ctrl_msg.data = 128;  // Define initial value of servo control value
+    nh.setParam("servo_ctrl_value", 128);   // Define servo control value as paramter in order for the user to manually control the servo motor if necessary
+
     // Declare loop rate 10Hz
     ros::Rate loop_rate(10);
 
     // While roscore is operational, loop will continue on...
     while(ros::ok()){
+
+        nh.getParam("servo_ctrl_value", servo_ctrl_msg.data);   // Bind servo control parameter to servo control message data value
+        servo_control.publish(servo_ctrl_msg);  // Publish servo control message through serial port
 
         ros::spinOnce();    // Handle all the message callbacks
 
