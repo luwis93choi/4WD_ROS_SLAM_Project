@@ -18,6 +18,7 @@
 
 #include <ros/ros.h>
 #include <std_msgs/Int32.h>
+#include <std_msgs/String.h>
 
 // This callback function will be invoked if the subscriber receives data from serial_node.py
 // This function receives serial data as standard String message
@@ -46,14 +47,30 @@ int main(int argc, char** argv){
     servo_ctrl_msg.data = 128;  // Define initial value of servo control value
     nh.setParam("servo_ctrl_value", 128);   // Define servo control value as paramter in order for the user to manually control the servo motor if necessary
 
+    std_msgs::Int32 dc_direction_ctrl_msg;
+    std_msgs::Int32 dc_speed_ctrl_msg;
+    ros::Publisher dc_direction_control = nh.advertise<std_msgs::Int32>("dc_direction_ctrl",10);
+    ros::Publisher dc_speed_control = nh.advertise<std_msgs::Int32>("dc_speed_ctrl",10);
+    dc_direction_ctrl_msg.data = 0;
+    dc_speed_ctrl_msg.data = 0;
+    nh.setParam("dc_direction_ctrl_value", "stop");
+    nh.setParam("dc_speed_ctrl_value", 0);
+
     // Declare loop rate 10Hz
     ros::Rate loop_rate(10);
+
+    ros::spinOnce();
 
     // While roscore is operational, loop will continue on...
     while(ros::ok()){
 
         nh.getParam("servo_ctrl_value", servo_ctrl_msg.data);   // Bind servo control parameter to servo control message data value
         servo_control.publish(servo_ctrl_msg);  // Publish servo control message through serial port
+
+        nh.getParam("dc_direction_ctrl_value", dc_direction_ctrl_msg.data);
+        nh.getParam("dc_speed_ctrl_value", dc_speed_ctrl_msg.data);
+        dc_direction_control.publish(dc_direction_ctrl_msg);
+        dc_speed_control.publish(dc_speed_ctrl_msg);
 
         ros::spinOnce();    // Handle all the message callbacks
 
