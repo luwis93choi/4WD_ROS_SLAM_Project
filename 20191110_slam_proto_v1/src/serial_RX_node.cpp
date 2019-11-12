@@ -41,7 +41,7 @@ int main(int argc, char** argv){
     ros::Subscriber arduino_subscriber = nh.subscribe("encoder", 1000, arduino_RX_Callback);
 
     std_msgs::Int32 servo_ctrl_msg; // Declare standard Int32 message for servo control
-    // Declare the publisher that will convey servo contrl value through Int32 message and serial port
+    // Declare the publisher that will convey servo control value through Int32 message and serial port
     ros::Publisher servo_control = nh.advertise<std_msgs::Int32>("servo_ctrl", 10); 
     servo_ctrl_msg.data = 128;  // Define initial value of servo control value
     nh.setParam("servo_ctrl_value", 128);   // Define servo control value as paramter in order for the user to manually control the servo motor if necessary
