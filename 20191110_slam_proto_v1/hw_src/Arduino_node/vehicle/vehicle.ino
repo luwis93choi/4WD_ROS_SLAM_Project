@@ -29,14 +29,14 @@ void dc_direction_ctrl_callback(const std_msgs::Int32& dc_direction_ctrl_msg){
   else if(dc_direction_ctrl_msg.data == 1){
 
     digitalWrite(dc_enable, HIGH);
-    digitalWrite(dc_directionA, HIGH);
-    digitalWrite(dc_directionB, LOW);
+    digitalWrite(dc_directionA, LOW);
+    digitalWrite(dc_directionB, HIGH);
   }
   else if(dc_direction_ctrl_msg.data == 2){
     
     digitalWrite(dc_enable, HIGH);
-    digitalWrite(dc_directionA, LOW);
-    digitalWrite(dc_directionB, HIGH);
+    digitalWrite(dc_directionA, HIGH);
+    digitalWrite(dc_directionB, LOW);
   }
 }
 
