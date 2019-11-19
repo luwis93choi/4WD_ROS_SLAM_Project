@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(slam_proto_v1)
 
+# Add this if catkin cannot find vision_opencv or OpenCV Directory
+# set(OpenCV_DIR <OpenCV Path>)
+
 find_package(catkin REQUIRED COMPONENTS
   rosconsole
   roscpp

@@ -2,6 +2,7 @@
 
 <!--RPLidar node launch code-->
     <node name="rplidarNode" pkg="rplidar_ros" type="rplidarNode" output="screen">
+        <!-- Change the device setting parameters according to current HW state -->
         <param name="serial_port" type="string" value="/dev/ttyUSB0"/>
         <param name="serial_baudrate" type="int" value="115200"/><!--A1/A2 -->
         <!--param name="serial_baudrate"     type="int"    value="256000"--><!--A3 -->
@@ -14,6 +15,10 @@
 
 <!--USB Cam node launch code-->
     <node name="usb_cam_node" pkg="usb_cam" type="usb_cam_node">
+        <!-- Change the device setting parameters according to current HW state -->
+        <!-- In order to receive video stream from camera, appropriate format and codec settings have to be applied -->
+        <param name="video_device" type="string" value="/dev/video3"/>
+        <param name="pixel_format" type="string" value="yuyv"/>
     </node>
     <node name="cam_node" pkg="slam_proto_v1" type="cam_node">
     </node>
@@ -21,6 +26,7 @@
 <!--Serial Communication node launch code-->
     <!--To launch python-based node, 'type' attribtue in <node> has to be 'filename.py'. This is due to ROS naming convetion.-->
     <node name="serial_port" pkg="rosserial_python" type="serial_node.py">
+        <!-- Change the device setting parameters according to current HW state -->
         <param name="port" value="/dev/ttyACM0"/>
         <param name="baud" value="57600"/>
         <!-- To adjust connection settings for rosserial, we have to access the setting values as 'param' attributes. -->
