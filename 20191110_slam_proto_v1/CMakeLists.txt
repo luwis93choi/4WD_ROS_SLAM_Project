@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(slam_proto_v1)
 
 # Add this if catkin cannot find vision_opencv or OpenCV Directory
-# set(OpenCV_DIR <OpenCV Path>)
+set(OpenCV_DIR /usr/share/OpenCV)
 
 find_package(catkin REQUIRED COMPONENTS
   rosconsole
@@ -20,6 +20,9 @@ find_package(catkin REQUIRED COMPONENTS
   # OpenCv specific requirements #
   OpenCV
   cv_bridge
+
+  # Transformation related requirement #
+  tf
 )
 
 # pkg-config libraries --> Image codec for usb_cam package #
@@ -78,4 +81,10 @@ add_dependencies(
 ) 
 target_link_libraries(
   serial_RX_node ${catkin_LIBRARIES}
+)
+
+# transformation executable declaration
+add_executable(tf_broadcaster src/tf_broadcaster.cpp)
+target_link_libraries(
+  tf_broadcaster ${catkin_LIBRARIES}
 )

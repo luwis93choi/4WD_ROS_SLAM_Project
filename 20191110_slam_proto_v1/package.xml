@@ -26,6 +26,8 @@
   <build_depend>OpenCV</build_depend>
   <build_depend>cv_bridge</build_depend>
   <!--*******************************************-->
+  <!--Transformation related build requirement-->
+  <build_depend>tf</build_depend>
 
   <build_export_depend>rosconsole</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
@@ -43,6 +45,8 @@
   <build_export_depend>OpenCV</build_export_depend>
   <build_export_depend>cv_bridge</build_export_depend>
   <!--*******************************************-->
+  <!--Transformation related build requirement-->
+  <build_export_depend>tf</build_export_depend>
 
   <exec_depend>rosconsole</exec_depend>
   <exec_depend>roscpp</exec_depend>
@@ -61,6 +65,8 @@
   <exec_depend>OpenCV</exec_depend>
   <exec_depend>cv_bridge</exec_depend>
   <!--*******************************************-->
+  <!--Transformation related build requirement-->
+  <exec_depend>tf</exec_depend>
 
   <export></export>
 </package>
