@@ -28,6 +28,8 @@
   <!--*******************************************-->
   <!--Transformation related build requirement-->
   <build_depend>tf</build_depend>
+  <!-- Navigation & Odometry related build requirement-->
+  <build_depend>nav_msgs</build_depend>
 
   <build_export_depend>rosconsole</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
@@ -47,6 +49,8 @@
   <!--*******************************************-->
   <!--Transformation related build requirement-->
   <build_export_depend>tf</build_export_depend>
+  <!-- Navigation & Odometry related build requirement-->
+  <build_export_depend>nav_msgs</build_export_depend>
 
   <exec_depend>rosconsole</exec_depend>
   <exec_depend>roscpp</exec_depend>
@@ -67,6 +71,8 @@
   <!--*******************************************-->
   <!--Transformation related build requirement-->
   <exec_depend>tf</exec_depend>
+  <!-- Navigation & Odometry related build requirement-->
+  <exec_depend>nav_msgs</exec_depend>
 
   <export></export>
 </package>

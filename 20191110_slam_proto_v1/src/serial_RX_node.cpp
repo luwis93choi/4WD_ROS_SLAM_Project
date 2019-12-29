@@ -20,6 +20,13 @@
 #include <std_msgs/Int32.h>
 #include <std_msgs/String.h>
 
+ros::Time current_time;
+ros::Time target_time;
+double delta_time = 0.0;
+int log_flag = 0;
+
+int encoder_count = 0;
+
 // This callback function will be invoked if the subscriber receives data from serial_node.py
 // This function receives serial data as standard String message
 void arduino_RX_Callback(const std_msgs::Int32& msg){
@@ -27,6 +34,29 @@ void arduino_RX_Callback(const std_msgs::Int32& msg){
     ROS_INFO("Arduino RX Message : %d", msg.data);
     // String message data is stored in 'data' member variable
     // Use c_str() in order to convert it into string value for CLI print
+
+    encoder_count = msg.data;
+
+    if((encoder_count >= 1) && (log_flag == 0)){
+    
+        current_time = ros::Time::now();
+        log_flag = 1;
+    }
+    else if((encoder_count >= 2600) && (log_flag == 1)){
+
+        target_time = ros::Time::now();
+
+        delta_time = (target_time - current_time).toSec();
+        ROS_INFO("Target Time reached");
+
+        log_flag = 2;
+    }
+
+    if(log_flag == 2){
+        ROS_INFO("target_time : %f sec", target_time.toSec());
+        ROS_INFO("current_time : %f sec", current_time.toSec());
+        ROS_INFO("delta t : %f sec", delta_time);
+    }
 }
 
 int main(int argc, char** argv){
@@ -39,7 +69,7 @@ int main(int argc, char** argv){
 
     // Declare the subscriber that receives serial data from serial_node.py
     // Receiving messages from serial_node.py will invoke arduino_RX_Callback function
-    ros::Subscriber arduino_subscriber = nh.subscribe("encoder", 1000, arduino_RX_Callback);
+    //ros::Subscriber arduino_subscriber = nh.subscribe("encoder", 1000, arduino_RX_Callback);
 
     std_msgs::Int32 servo_ctrl_msg; // Declare standard Int32 message for servo control
     // Declare the publisher that will convey servo control value through Int32 message and serial port
@@ -60,6 +90,11 @@ int main(int argc, char** argv){
     ros::Rate loop_rate(10);
 
     ros::spinOnce();
+
+
+    current_time = ros::Time::now();
+    target_time = ros::Time::now();
+
 
     // While roscore is operational, loop will continue on...
     while(ros::ok()){

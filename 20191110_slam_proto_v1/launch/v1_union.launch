@@ -30,7 +30,7 @@
 
 <!--Serial Communication node launch code-->
     <!--To launch python-based node, 'type' attribtue in <node> has to be 'filename.py'. This is due to ROS naming convetion.-->
-    <node name="serial_port" pkg="rosserial_python" type="serial_node.py">
+    <node name="serial_port" pkg="rosserial_python" type="serial_node.py" output="screen">
         <!-- Change the device setting parameters according to current HW state -->
         <param name="port" value="/dev/ttyACM0"/>
         <param name="baud" value="57600"/>
@@ -39,13 +39,19 @@
     <node name="serial_RX_node" pkg="slam_proto_v1" type="serial_RX_node">
     </node>
 
-<!--Transformation node launch node-->
+<!--Transformation node launch code-->
+<!--
     <node name="tf_broadcaster" pkg="slam_proto_v1" type="tf_broadcaster">
     </node>
-
+-->
 <!--Gmapping node launch code-->
     <node name="slam_gmapping" pkg="gmapping" type="slam_gmapping">
         <param name="scan" value="/scan"/>
     </node>
 
+<!--Ackermann Odom node launch code-->
+
+    <node name="ackermann_odom_broadcaster" pkg="slam_proto_v1" type="ackermann_odom_broadcaster" output="screen">
+    </node>
+    
 </launch>

@@ -23,6 +23,9 @@ find_package(catkin REQUIRED COMPONENTS
 
   # Transformation related requirement #
   tf
+
+  # Navigation & Odometry related requirement #
+  nav_msgs
 )
 
 # pkg-config libraries --> Image codec for usb_cam package #
@@ -87,4 +90,14 @@ target_link_libraries(
 add_executable(tf_broadcaster src/tf_broadcaster.cpp)
 target_link_libraries(
   tf_broadcaster ${catkin_LIBRARIES}
+)
+
+# ackermann_odom_broadcaster executable declaration
+add_executable(ackermann_odom_broadcaster src/ackermann_odom_broadcaster.cpp)
+add_dependencies(
+  ackermann_odom_broadcaster ${${PROJECT_NAME}_EXPORTED_TARGETS}
+                             ${catkin_EXPORTED_TARGETS}
+) 
+target_link_libraries(
+  ackermann_odom_broadcaster ${catkin_LIBRARIES}
 )

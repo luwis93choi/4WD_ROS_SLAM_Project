@@ -62,7 +62,7 @@ int main(int argc, char** argv){
          *                             *** ROS often holds the operation until transformation data is available for use. 
          *
          * [Target Frames]
-         * 4, 5. Child Frame ID, Parent Frame ID of transformation : Parent Frame ID --> Child Frame ID  
+         * 4, 5. Parent Frame ID, Child Frame ID of transformation : Parent Frame ID --> Child Frame ID  
          */ 
         broadcaster.sendTransform(
             tf::StampedTransform(
