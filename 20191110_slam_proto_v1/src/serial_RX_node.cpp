@@ -83,7 +83,7 @@ int main(int argc, char** argv){
     ros::Publisher dc_speed_control = nh.advertise<std_msgs::Int32>("dc_speed_ctrl",10);
     dc_direction_ctrl_msg.data = 0;
     dc_speed_ctrl_msg.data = 0;
-    nh.setParam("dc_direction_ctrl_value", "stop");
+    nh.setParam("dc_direction_ctrl_value", 0);
     nh.setParam("dc_speed_ctrl_value", 0);
 
     // Declare loop rate 10Hz

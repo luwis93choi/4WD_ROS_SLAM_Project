@@ -3,6 +3,7 @@
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/Int32.h>
 
+// Odometry Variables //////////////////////////////////////////////
 double x = 0;               // [m]
 double y = 0;               // [m]
 double theta = 0;           // [radian]
@@ -19,41 +20,58 @@ double steering_angle = 0;  // [radian]
 // *** Change this value according to the body lenght of car-like robot *** //
 double body_length = 0.25;  // 0.25m [m]
 double wheel_circumference = 0.2041; // 0.2041m [m]
+////////////////////////////////////////////////////////////////////////////////
 
-
+// Velocity Calculation Variables //////////////////////////////////////////////
 ros::Time vel_current_time;     // [sec]
 ros::Time vel_target_time;      // [sec]
 double vel_delta_time = 0.0;    // [sec]
 int log_flag = 0;
 
+bool calc_flag = false;
+////////////////////////////////////////////////////////////////////////////////
 
 void wheel_velocity_calcCB(const std_msgs::Int32& msg){
 
-    // wheel_velocity calculation based on encoder count value
+    if(calc_flag == true){
 
-    if((msg.data >= 2600) && (log_flag == 0)){
-    
-        vel_current_time = ros::Time::now();
-        log_flag = 1;
+        // wheel_velocity calculation based on encoder count value
+        if((msg.data >= 2600) && (log_flag == 0)){
+        
+            vel_current_time = ros::Time::now();
+            log_flag = 1;
+        }
+        else if((msg.data >= 2600) && (log_flag == 1)){
+
+            vel_target_time = ros::Time::now();
+
+            vel_delta_time = (vel_target_time - vel_current_time).toSec();
+
+            wheel_velocity = (wheel_circumference / vel_delta_time);
+
+            ROS_INFO("Current Speed : %f m/s", wheel_velocity);
+
+            log_flag = 0;
+        }
     }
-    else if((msg.data >= 2600) && (log_flag == 1)){
+    else if(calc_flag == false){
 
-        vel_target_time = ros::Time::now();
-
-        vel_delta_time = (vel_target_time - vel_current_time).toSec();
-
-        wheel_velocity = (wheel_circumference / vel_delta_time);
-
-        /*
-        ROS_INFO("Target Time reached");        
-        ROS_INFO("target_time : %f sec", vel_target_time.toSec());
-        ROS_INFO("current_time : %f sec", vel_current_time.toSec());
-        ROS_INFO("delta t : %f sec \n", vel_delta_time);
-        */
-
-        ROS_INFO("Current Speed : %f m/s", wheel_velocity);
-
+        ROS_INFO("Vehicle Stopped / Initializing velocity variables");
         log_flag = 0;
+        vel_current_time = ros::Time::now();
+        vel_target_time = vel_target_time;
+        vel_delta_time = 0;
+        wheel_velocity = 0;
+    }
+}
+
+void velocity_ctrlCB(const std_msgs::Int32& msg){
+
+    if(msg.data == 0){
+        calc_flag = false;
+    }
+    else{
+        calc_flag = true;
     }
 }
 
@@ -75,6 +93,9 @@ int main(int argc, char** argv){
 
     ros::Subscriber wheel_velocity_calc = nh.subscribe("encoder", 1000, wheel_velocity_calcCB);
     //ros::Subscriber steering_angle_calc = nh.subscribe("servo_ctrl", 10, steering_angle_calcCB);
+
+    ros::Subscriber velocity_dir_command = nh.subscribe("dc_direction_ctrl", 100, velocity_ctrlCB);
+    ros::Subscriber velocity_speed_command = nh.subscribe("dc_speed_ctrl", 100, velocity_ctrlCB);
 
     ros::Time current_time, last_time;
     current_time = ros::Time::now();

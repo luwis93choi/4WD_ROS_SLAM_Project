@@ -14,12 +14,29 @@ void servo_ctrl_callback(const std_msgs::Int32& servo_ctrl_msg){
 }
 ////////////////////////////////////////////////
 
+// Encoder Interrupt ////////////////////////////
+const int encoder_outA = 2; // Phase A output
+const int encoder_outB = 4; // Phase B output
+
+String direction = "Unknown";
+
+int encoder_count = 0;
+
+void encoder_counter(){
+
+  direction = (digitalRead(encoder_outB) == HIGH) ? "CW" : "CCW";
+
+  encoder_count++;
+}
+////////////////////////////////////////////////
 
 // DC Control Callback ////////////////////////
 int dc_directionA = 13;
 int dc_directionB = 12;
 int dc_enable = 10;
 int dc_pin = 11;
+
+int prev_direction = 0;
 
 void dc_direction_ctrl_callback(const std_msgs::Int32& dc_direction_ctrl_msg){
 
@@ -28,18 +45,36 @@ void dc_direction_ctrl_callback(const std_msgs::Int32& dc_direction_ctrl_msg){
     digitalWrite(dc_enable, LOW);
     digitalWrite(dc_directionA, LOW);
     digitalWrite(dc_directionB, LOW);
+    
+    encoder_count = 0;  // Reset encoder count as the vehicle stopped
+
+    prev_direction = dc_direction_ctrl_msg.data;
   }
   else if(dc_direction_ctrl_msg.data == 1){
 
     digitalWrite(dc_enable, HIGH);
     digitalWrite(dc_directionA, LOW);
     digitalWrite(dc_directionB, HIGH);
+
+    if(prev_direction != dc_direction_ctrl_msg.data){
+
+      encoder_count = 0;  // Reset encoder count as the vehicle changed its wheel direction
+
+      prev_direction = dc_direction_ctrl_msg.data;
+    }
   }
   else if(dc_direction_ctrl_msg.data == 2){
     
     digitalWrite(dc_enable, HIGH);
     digitalWrite(dc_directionA, HIGH);
     digitalWrite(dc_directionB, LOW);
+    
+    if(prev_direction != dc_direction_ctrl_msg.data){
+
+      encoder_count = 0;  // Reset encoder count as the vehicle changed its wheel direction
+
+      prev_direction = dc_direction_ctrl_msg.data;
+    }
   }
 }
 
@@ -64,22 +99,6 @@ ros::Subscriber<std_msgs::Int32> dc_direction_ctrl("dc_direction_ctrl", dc_direc
 ros::Subscriber<std_msgs::Int32> dc_speed_ctrl("dc_speed_ctrl", dc_speed_ctrl_callback);
 //////////////////////////////////////////////////
 
-
-// Encoder Interrupt ////////////////////////////
-const int encoder_outA = 2; // Phase A output
-const int encoder_outB = 4; // Phase B output
-
-String direction = "Unknown";
-
-int encoder_count = 0;
-
-void encoder_counter(){
-
-  direction = (digitalRead(encoder_outB) == HIGH) ? "CW" : "CCW";
-
-  encoder_count++;
-}
-////////////////////////////////////////////////
 void setup() {
 
   nh.initNode();

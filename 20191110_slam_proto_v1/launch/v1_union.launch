@@ -22,7 +22,7 @@
     <node name="usb_cam_node" pkg="usb_cam" type="usb_cam_node">
         <!-- Change the device setting parameters according to current HW state -->
         <!-- In order to receive video stream from camera, appropriate format and codec settings have to be applied -->
-        <param name="video_device" type="string" value="/dev/video3"/>
+        <param name="video_device" type="string" value="/dev/video2"/>
         <param name="pixel_format" type="string" value="yuyv"/>
     </node>
     <node name="cam_node" pkg="slam_proto_v1" type="cam_node">
