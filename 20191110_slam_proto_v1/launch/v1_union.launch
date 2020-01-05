@@ -19,14 +19,32 @@
     </node>
 
 <!--USB Cam node launch code-->
+<!--
     <node name="usb_cam_node" pkg="usb_cam" type="usb_cam_node">
+-->
         <!-- Change the device setting parameters according to current HW state -->
         <!-- In order to receive video stream from camera, appropriate format and codec settings have to be applied -->
+<!--
         <param name="video_device" type="string" value="/dev/video2"/>
         <param name="pixel_format" type="string" value="yuyv"/>
     </node>
     <node name="cam_node" pkg="slam_proto_v1" type="cam_node">
     </node>
+-->
+
+<!--Intel Realsense Camera Image + IMU launch code-->
+    <!--In order to launch another .launch file from different package, use <include> tag-->
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+        <arg name="unite_imu_method" value='linear_interpolation'/>
+    </include>
+
+<!--Madgwick IMU Filter launch code-->
+    <node name="imu_filter_madgwick" pkg="imu_filter_madgwick" type="imu_filter_node">
+        <param name="use_mag" type="bool" value="false"/>
+        <param name="_publish_tf" type="bool" value="false"/>
+        <param name="_world_frame" type="string" value="enu"/>
+        <remap from="imu/data_raw" to="camera/imu"/>
+    </node>    
 
 <!--Serial Communication node launch code-->
     <!--To launch python-based node, 'type' attribtue in <node> has to be 'filename.py'. This is due to ROS naming convetion.-->
