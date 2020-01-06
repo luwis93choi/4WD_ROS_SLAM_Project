@@ -3,6 +3,7 @@
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/Int32.h>
 #include <sensor_msgs/Imu.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 // Odometry Variables //////////////////////////////////////////////
 double x = 0;               // [m]
@@ -38,6 +39,8 @@ double gravitional_accel = 9.728;   // [m/s^2]
 double IMU_inclination_angle = 0;   // [radian]
 
 double tilt_angle_on_gravity_axis = 0;
+
+tf2::Quaternion prev_quat_tf;
 ////////////////////////////////////////////////////////////////////////////////
 
 void wheel_velocity_calcCB(const std_msgs::Int32& msg){
@@ -92,10 +95,27 @@ void steering_angle_calcCB(const sensor_msgs::Imu msg){
     double quat_z = msg.orientation.z;
     double quat_w = msg.orientation.w;
 
-    ROS_INFO("Quaternion orientation.x : %f", quat_x);
-    ROS_INFO("Quaternion orientation.y : %f", quat_y);
-    ROS_INFO("Quaternion orientation.z : %f", quat_z);
-    ROS_INFO("Quaternion orientation.w : %f \n", quat_w);
+    //ROS_INFO("Quaternion orientation.x : %f", quat_x);
+    //ROS_INFO("Quaternion orientation.y : %f", quat_y);
+    //ROS_INFO("Quaternion orientation.z : %f", quat_z);
+    //ROS_INFO("Quaternion orientation.w : %f \n", quat_w);
+
+    tf2::Quaternion current_quat_tf;
+    tf2::convert(msg.orientation, current_quat_tf);
+
+    tf2::Quaternion quat_relative_rotation;
+    quat_relative_rotation = current_quat_tf * (prev_quat_tf.inverse());
+
+    quat_relative_rotation.normalize();
+
+    geometry_msgs::Quaternion temp = tf2::toMsg(quat_relative_rotation);
+
+    ROS_INFO("Relative Rotation Quaternion.x : %f", temp.x);
+    ROS_INFO("Relative Rotation Quaternion.y : %f", temp.y);
+    ROS_INFO("Relative Rotation Quaternion.z : %f", temp.z);
+    ROS_INFO("Relative Rotation Quaternion.w : %f \n", temp.w);
+
+    prev_quat_tf = current_quat_tf;
 /*
     double linear_accel_x = msg.linear_acceleration.x;
     double linear_accel_y = msg.linear_acceleration.y;
@@ -159,6 +179,9 @@ int main(int argc, char** argv){
     // *******************************************************************************//
     // Steering Angle Calculation
     ros::Subscriber steering_angle_calc = nh.subscribe("/imu/data", 100, steering_angle_calcCB);
+
+    prev_quat_tf.setRPY(0, 0, 0);
+    prev_quat_tf.normalize();
 
     // *******************************************************************************//
 
