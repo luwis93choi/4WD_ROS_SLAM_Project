@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   std_srvs
+  message_filters
 
   # usb_cam specific requirements #
   image_transport
@@ -27,6 +28,11 @@ find_package(catkin REQUIRED COMPONENTS
   # Navigation & Odometry related requirement #
   nav_msgs
 )
+
+add_message_files(FILES DC_velocity.msg)
+
+generate_messages(DEPENDENCIES std_msgs)
+
 
 # pkg-config libraries --> Image codec for usb_cam package #
 find_package(PkgConfig REQUIRED)

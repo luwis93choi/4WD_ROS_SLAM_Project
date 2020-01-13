@@ -1,5 +1,13 @@
 <launch>
 
+<!--Intel Realsense Camera Image + IMU launch code-->
+    <!--In order to launch another .launch file from different package, use <include> tag-->
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+        <arg name="unite_imu_method" value='linear_interpolation'/>
+        <arg name="publish_tf" value="false"/>
+        <arg name="publish_odom_tf" value="false"/>
+    </include>
+
 <!--RPLidar node launch code-->
     <node name="rplidarNode" pkg="rplidar_ros" type="rplidarNode" output="screen">
         <!-- Change the device setting parameters according to current HW state -->
@@ -32,12 +40,6 @@
     </node>
 -->
 
-<!--Intel Realsense Camera Image + IMU launch code-->
-    <!--In order to launch another .launch file from different package, use <include> tag-->
-    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
-        <arg name="unite_imu_method" value='linear_interpolation'/>
-    </include>
-
 <!--Madgwick IMU Filter launch code-->
     <node name="imu_filter_madgwick" pkg="imu_filter_madgwick" type="imu_filter_node">
         <param name="use_mag" type="bool" value="false"/>
@@ -50,7 +52,7 @@
     <!--To launch python-based node, 'type' attribtue in <node> has to be 'filename.py'. This is due to ROS naming convetion.-->
     <node name="serial_port" pkg="rosserial_python" type="serial_node.py" output="screen">
         <!-- Change the device setting parameters according to current HW state -->
-        <param name="port" value="/dev/ttyACM0"/>
+        <param name="port" value="/dev/ttyACM1"/>
         <param name="baud" value="57600"/>
         <!-- To adjust connection settings for rosserial, we have to access the setting values as 'param' attributes. -->
     </node>
@@ -65,6 +67,11 @@
 <!--Gmapping node launch code-->
     <node name="slam_gmapping" pkg="gmapping" type="slam_gmapping">
         <param name="scan" value="/scan"/>
+        <param name="map_update_interval" value="2"/>
+        <param name="particles" value="10"/>
+	<param name="delta" value="0.1"/>
+        <param name="linearUpdate" value="0.1"/>
+        <param name="angularUpdate" value="0.5"/>
     </node>
 
 <!--Ackermann Odom node launch code-->
