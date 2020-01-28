@@ -82,14 +82,14 @@ target_link_libraries(
   lidar_node ${catkin_LIBRARIES}
 )
 
-# serial_RX_node executable declaration
-add_executable(serial_RX_node src/serial_RX_node.cpp)
+# serial_RX_vel_stamp executable declaration
+add_executable(serial_RX_vel_stamp src/serial_RX_vel_stamp.cpp)
 add_dependencies(
-  serial_RX_node ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  serial_RX_vel_stamp ${${PROJECT_NAME}_EXPORTED_TARGETS}
                  ${catkin_EXPORTED_TARGETS}
 ) 
 target_link_libraries(
-  serial_RX_node ${catkin_LIBRARIES}
+  serial_RX_vel_stamp ${catkin_LIBRARIES}
 )
 
 # transformation executable declaration
