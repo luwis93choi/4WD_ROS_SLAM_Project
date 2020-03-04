@@ -1,0 +1,28 @@
+Nvidia Jetson TX2 Orbitty Board Setup
+
+- Target Version : Nvidia Jetson TX2 JetPack 4.2.2.
+- Target HW : Jetson TX2, Connect Tech Orbitty Board
+- SW Tool : Nvidia SDK Manager
+
+1. Orbitty 보드에 Jetson TX2를 사용하게 될 시 Orbitty Board I/O에 적합한 Kernel 설치 필요
+2. Host Linux PC에서 Connect Tech Inc 사이트에 등재된 Nvidia Jetson Board Support Package 다운로드
+   - 참고 : http://connecttech.com/resource-center/kdb373/
+   - 다운로드시 Jetson TX2에 설치할 JetPack 버전에 맞춰서 Support Package를 Host Linux PC에 다운로드
+3. Host Linux PC에 Nvidia SDK Manager 설치
+4. Host Linux PC에서 Nvidia SDK Manager를 실행해서 Jetson TX2 4.2.2에 적합한 셋팅으로 JetPack 이미지를 다운로드만 함
+   - Jetson에 대해서 Flashing을 진행하지 않고, 다운로드만 받아놓음
+   - 이후에 다운받은 Jetpack 이미지에 Board Support Package를 추가할 예정
+5. Host Linux PC에서 다운로드 받은 JetPack 이미지를 찾아가서 Linux_for_Tegra 폴더로 이동함 
+6. Host Linux PC에서 다운로드 받은 Board Support Package 압축을 풀음
+7. Host Linux PC에서 압축을 풀은 후에 CTI-L4T 파일로 이동
+8. Host Linux PC의 CTI-L4T 파일에서 sudo ./install.sh 실행
+9. install.sh가 종료된 후 Linux_for_Tegra로 돌아가면 cti_flash.sh 쉘 스크립트 파일이 생성되어있음
+   - 신버전 (version num 4 이후)에는 Orbitty 보드 Kernel 설치를 위해 별도의 폴더(cti)로 설치 설정를 보관하고 있음
+   - 신버전 JetPack 설치를 위해서는 sudo ./cti_flash.sh를 통해 사용하는 Jetson과 I/O보드에 맞춰서 적합한 설치 설정 및 flash를 진행함
+   - 구버전에서는 Orbitty 보드 Kernel 설치를 위한 설치 설정을 JetPack 폴더에 merge 시키며, flash시 sudo ./flash.sh orbitty mmblkp01 커맨드를 통해 사용하는 보드를 명시해야함
+   - 신버전 JetPack을 설치할 시 cti_flash.sh를 사용하지 않으면 ROM communication과 USB 3.0 통신 설정에 문제가 발생함 
+     (애초에 발생한 Kernel 이슈를 해결하지 못하기에 Orbitty Board 제조사가 제공하는 Support Package 설정을 따라야함)
+10. sudo ./cti_flash.sh 커맨드를 통해 사용하는 I/O보드와 Jetson 종류를 CLI 메뉴에서 선택해주고 설치를 진행함
+   - cti_flash.sh는 Orbitty USB 3.0 사용가능하도록 Kernel이 수정된 Ubuntu OS 이미지를 Jetson에 Flash함
+   - 이후 SDK Manager에서는 OS 설치를 안해도됨 / 다시 OS image를 설치하면 덮어쓰기기 때문에 다시 USB 3.0 미호환 문제가 발생함
+11. Nvidia SDK Manager를 다시 실행해서 OS Image 설치를 체크해제 하고 나머지 SDK를 체크하여 설치함

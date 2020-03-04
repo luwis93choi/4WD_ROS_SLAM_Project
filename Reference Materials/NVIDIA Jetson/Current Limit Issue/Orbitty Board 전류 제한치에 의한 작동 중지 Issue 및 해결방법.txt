@@ -1,0 +1,24 @@
+Orbitty Board 전류 제한치에 의한 작동 중지 Issue 및 해결방법
+
+참고자료
+- Jetson TX2 정식 Development Board Current Limit 관련 토의 : https://devtalk.nvidia.com/default/topic/1006369/jetson-tx2/power-requirement-for-jetson-tx2-development-board/
+                                                                                    https://devtalk.nvidia.com/default/topic/1024995/jetson-tx2/connecting-multiple-usb-3-0-cameras-to-a-tx1-tx2/
+  (정식 Development Board의 전류 소모 허용량은 약 4 ~ 5A 사이로 예상됨)
+- Orbitty Board 세부 Specification : http://www.connecttech.com/pdf/CTIM-ASG003_Manual.pdf
+  (해당 Datasheet에 Orbitty Board USB 3.0에 대해 전류 소모 혀용량을 1A로 제한된다고 명시되어있음)
+- USB 3.0 : https://en.wikipedia.org/wiki/USB_3.0
+  (USB 3.0 디바이스 각각의 최대 900mA까지 전류 소모를 할 수 있음)
+
+
+1. 이슈 : Orbitty Board USB 3.0에 USB 3.0 Hub 연결 후 다수 디바이스를 연결하여 ROS 프로그램에 연동하여 사용할 시 일시적으로 모든 디바이스가 죽거나 Shutdown되는 현상이 발생함
+           그러나 Jetson TX2 정식 Development Board에서는 이러한 현상이 발생하기 않음.
+
+2. 원인 : Orbitty Board USB 3.0 포트 자체에 대해 전류 제한치를 1A로 고정시켜 놓음. 
+           또한 USB 3.0 표준에 의하면 USB 3.0 디바이스가 최대 사용할 수 있는 전류 소모량은 900mA임. 최대 전류 소모 USB 3.0 디바이스를 몇 개 사용할시 1A는 쉽게 넘음.
+           그렇기 때문에 USB 3.0 Hub를 연결한 후 다수 디바이스를 연결하여 사용하게 될 경우 전류 제한치가 넘는 순간 Hub 자체가 죽거나 Shtudown됨
+
+            반면에 Jetson TX2 정식 Development Board는 USB 3.0에 대한 전류 제한치를 명시하고 있지 않으나, 다수 Nvidia 커뮤니티 내용과 I/O 구성도를 보았을 때 최소 4A ~ 5A를 지원하는 것 같음
+            그러므로 다수 USB 3.0 디바이스를 연결하여 사용해도 전류 문제없이 작동가능
+
+3. 해결방법 : Orbitty Board USB 3.0 포트에 대한 전류 부담을 최소화하기 위해 외부 전원 인가 가능한 USB 3.0 허브를 사용해야함.
+                 외부 전원을 인가하면서 다수 USB 3.0 디바이스를 ROS 프로그램을 통해 작동시킬 시 문제없이 작동됨
