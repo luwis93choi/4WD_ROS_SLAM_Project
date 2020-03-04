@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ros_usb_cam_practice</name>
+  <version>0.0.0</version>
+  <description>The ros_usb_cam_practice package</description>
+  <maintainer email="luwis93choi@hotmail.com">Luwis Choi</maintainer>
+  <license>BSD</license>
+  <author email="luwis93choi@hotmail.com">Luwis Choi</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>message_generation</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+
+  <!-- usb_came module specific build requirements-->
+  <build_depend>image_transport</build_depend>
+  <build_depend>std_srvs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>ffmpeg</build_depend>
+  <build_depend>camera_info_manager</build_depend>
+  <!-- -->
+
+  <!-- OpenCV specific build requirement -->
+  <build_depend>OpenCV</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <!-- -->
+
+  <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>std_msgs</build_export_depend>
+  
+
+  <!-- usb_came module specific execution requirements-->
+  <exec_depend>image_transport</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>ffmpeg</exec_depend>
+  <exec_depend>camera_info_manager</exec_depend>
+  <exec_depend>v4l-utils</exec_depend>
+  <!-- -->
+
+  <!-- OpenCV specific execution requirement -->
+  <exec_depend>OpenCV</exec_depend>
+  <exec_depend>cv_bridge</exec_depend>
+  <!-- -->
+
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+
+  <export></export>
+</package>
