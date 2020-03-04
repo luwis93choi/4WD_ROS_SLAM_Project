@@ -1,1 +1,0 @@
-int64 image_rx_count
