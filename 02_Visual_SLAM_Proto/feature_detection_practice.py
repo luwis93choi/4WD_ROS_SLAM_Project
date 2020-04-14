@@ -137,7 +137,9 @@ elif detector_mode == 3:
         plt.imshow(OutImg)
         plt.show()
 
-# Real-Time ORB Feature Detector using Intel Realsense D435i
+# Mode 4 : Real-Time ORB Feature Detector using Intel Realsense D435i
+# (https://github.com/IntelRealSense/librealsense/blob/master/wrappers/python/examples/opencv_viewer_example.py)
+# (https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_orb/py_orb.html)
 elif detector_mode == 4:
 
     # Installation Process for ROS & Python
