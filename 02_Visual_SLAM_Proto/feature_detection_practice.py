@@ -1,13 +1,15 @@
 import numpy as np
-import cv2 as cv
+import cv2 as cv            # OpenCV
 import os
 from matplotlib import pyplot as plt
+
+import pyrealsense2 as rs   # Realsense SDK 2.0 Python Wrapper
 
 test_image_path = 'test_images'
 
 images_filename = list(os.listdir(test_image_path))
 
-detector_mode = 3
+detector_mode = 4
 
 print(cv.__version__)
 
@@ -125,8 +127,87 @@ elif detector_mode == 3:
         keypoints, des = orb.compute(img, keypoints)
 
         OutImg = img
+
+        for kp in keypoints:
+
+            print("x : " + str(kp.pt[0]) + ", y : " + str(kp.pt[1]))  
+
         cv.drawKeypoints(img, keypoints, OutImg, color=(0,255,0), flags=0)
 
         plt.imshow(OutImg)
         plt.show()
+
+# Real-Time ORB Feature Detector using Intel Realsense D435i
+elif detector_mode == 4:
+
+    # Installation Process for ROS & Python
+    #
+    # 1. Install Intel Realsense SDK
+    #    (1) Register the server's public key
+    #        sudo apt-key adv --keyserver keys.gnupg.net --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE
+    #    (2) Add the server to the list of repositories
+    #        - For Ubuntu 16 LTS
+    #          sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main" -u
+    #        - For Ubuntu 18 LTS
+    #          sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo bionic main" -u
+    #    (3) Install libraries
+    #        - sudo apt-get install librealsense2-dkms  (Depth camera-specific kernel extensions)
+    #        - sudo apt-get install librealsense2-utils (Demos and tools for Realsens SDK)
+    #        - sudo apt-get install librealsense2-dev   (Header files and symbolic links for developers)
+    #        - sudo apt-get install librealsense2-dbg   (Debug symbols for developers)
+    #
+    #          * Optional : sudo apt-get install librealsense2-udev (Configurations for Realsense Device permissions on kernel level)
+    #                     : sudo apt-get install librealsense2      (Realsense SDK runtime and configuration files)
+    #
+    #    (4) Check & Upgrade Installation
+    #        - Check Installation : modinfo uvcvideo | grep "version:" --> Check whether it includes 'realsense'
+    #        - Upgrade package : sudo apt get update --> sudo apt get upgrade
+    #
+    # 2. Intel Realsense ROS Wrapper Package Installation ('realsense2-camera')
+    #    (1) Install ROS package according to distribution version
+    #        sudo apt-get install ros-(distro)-realsense2-camera
+    #        (ex : For Melodic - sudo apt-get install ros-melodic-realsense2-camera)
+    #
+    # 3. Intel Realsense Python Wrapper Installation
+    #    (1) Use pip3 to install pyrealsense2 for Python3
+    #        pip3 install pyrealsense2
+    #
+    #    *** pyrealsense2 is official Python wrapper for Realsense SDK 2.0
+    #    *** pyrealsense is Python wrapper for legacy librealsense v1.12.1 / pyrealsense does not support Realsense SDK 2.0
+
+    pipeline = rs.pipeline()
+    
+    config = rs.config()
+    config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+
+    pipeline.start(config)
+
+    try:
+
+        orb = cv.ORB_create()
+
+        while True:
+
+            frames = pipeline.wait_for_frames()
+            color_frames = frames.get_color_frame()
+
+            if not color_frames:
+                continue
+
+            color_image = np.asanyarray(color_frames.get_data())
+
+            keypoints = orb.detect(color_image, None)
+
+            keypoints, des = orb.compute(color_image, keypoints)
+
+            OutputImg = color_image
+
+            cv.drawKeypoints(color_image, keypoints, OutputImg, color=(0, 255, 0), flags=0)
+
+            cv.namedWindow('Realsense', cv.WINDOW_AUTOSIZE)
+            cv.imshow('Realsense', OutputImg)
+            cv.waitKey(1)
+
+    finally:
+        pipeline.stop()
 
