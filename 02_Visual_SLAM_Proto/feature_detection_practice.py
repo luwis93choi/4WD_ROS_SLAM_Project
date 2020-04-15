@@ -326,6 +326,20 @@ elif detector_mode == 6:
 
             print('')
 
+            # 1 pixel = 0.0264583333 cm
+            print('Euclidean distance calculation results between Top 10 feature matching points')
+            euclidean_distance = []
+            pixel_to_cm = 0.0264583333
+            for i in range(10):
+                
+                x_diff_square = (prev_keypoints[matches[i].queryIdx].pt[0] - current_keypoints[matches[i].trainIdx].pt[0])**2
+                y_diff_square = (prev_keypoints[matches[i].queryIdx].pt[1] - current_keypoints[matches[i].trainIdx].pt[1])**2
+
+                euclidean_distance.append(pixel_to_cm * ((x_diff_square + y_diff_square)**0.5))
+                print(str(euclidean_distance[i]) + 'cm')
+
+            print('')
+
             match_result_img = cv.drawMatches(prev_color_images, prev_keypoints, current_color_images, current_keypoints, matches[:10], None, flags=2)
 
             # Update reference image for feature matching
