@@ -7,9 +7,9 @@ import pyrealsense2 as rs   # Realsense SDK 2.0 Python Wrapper
 
 test_image_path = 'test_images'
 
-images_filename = list(os.listdir(test_image_path))
+images_filename = sorted(list(os.listdir(test_image_path)))
 
-detector_mode = 4
+detector_mode = 5
 
 print(cv.__version__)
 
@@ -213,3 +213,45 @@ elif detector_mode == 4:
     finally:
         pipeline.stop()
 
+# Mode 5 : Static Image Feature Matcher using ORB and Brute Force Matcher
+elif detector_mode == 5:
+
+    test_image_path = 'test_images/feature_matcher_test_image'
+
+    images_filename = sorted(list(os.listdir(test_image_path)))
+
+    output_image = []
+    output_keypoints = []
+    output_descriptors = []
+
+    orb = cv.ORB_create()
+
+    for i in range(len(images_filename)):
+
+        print("Reading Image : " + test_image_path + images_filename[i])
+
+        current_image = cv.imread(test_image_path + '/' + images_filename[i])
+
+        keypoints = orb.detect(current_image, None)
+
+        keypoints, des = orb.compute(current_image, keypoints)
+
+        output_image.append(current_image)
+        output_keypoints.append(keypoints)
+        output_descriptors.append(des)
+
+    images = []
+
+    brute_force_matcher = cv.BFMatcher(cv.NORM_HAMMING, crossCheck = True)
+
+    for i in range(len(output_descriptors)-1):
+
+        matches = brute_force_matcher.match(output_descriptors[i], output_descriptors[i + 1])
+
+        matches = sorted(matches, key = lambda x:x.distance)
+
+        match_result_img = cv.drawMatches(output_image[i], output_keypoints[i], output_image[i+1], output_keypoints[i+1], matches[:10], None, flags=2)
+
+        cv.namedWindow('Result', cv.WINDOW_AUTOSIZE)
+        cv.imshow('Result', match_result_img)
+        cv.waitKey(0)
