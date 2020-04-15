@@ -9,7 +9,7 @@ test_image_path = 'test_images'
 
 images_filename = sorted(list(os.listdir(test_image_path)))
 
-detector_mode = 5
+detector_mode = 6
 
 print(cv.__version__)
 
@@ -242,6 +242,8 @@ elif detector_mode == 5:
 
     images = []
 
+    # ORB-based Brute Force Matcher uses Hamming distance in order to determine the distance between descriptors
+    # This is because ORB produces binary string-based descriptors
     brute_force_matcher = cv.BFMatcher(cv.NORM_HAMMING, crossCheck = True)
 
     for i in range(len(output_descriptors)-1):
@@ -252,6 +254,88 @@ elif detector_mode == 5:
 
         match_result_img = cv.drawMatches(output_image[i], output_keypoints[i], output_image[i+1], output_keypoints[i+1], matches[:10], None, flags=2)
 
-        cv.namedWindow('Result', cv.WINDOW_AUTOSIZE)
-        cv.imshow('Result', match_result_img)
+        cv.namedWindow('Brute Force Matching Result', cv.WINDOW_AUTOSIZE)
+        cv.imshow('Brute Force Matching Result', match_result_img)
         cv.waitKey(0)
+
+# Mode 6 : Feature Matcher for Real-Time Video using ORB and Brute Force Matcher
+elif detector_mode == 6:
+
+    pipeline = rs.pipeline()
+
+    config = rs.config()
+    config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+
+    pipeline.start(config)
+
+    try:
+
+        orb = cv.ORB_create()
+
+        brute_force_matcher = cv.BFMatcher(cv.NORM_HAMMING, crossCheck = True)
+
+        ### Initial Feature Extraction ###
+        frames = pipeline.wait_for_frames()
+        current_color_frames = frames.get_color_frame()
+
+        current_color_images = np.asanyarray(current_color_frames.get_data())
+
+        current_keypoints = orb.detect(current_color_images, None)
+
+        current_keypoints, current_descriptor = orb.compute(current_color_images, current_keypoints)
+
+        prev_color_images = current_color_images
+        prev_keypoints = current_keypoints
+        prev_descriptor = current_descriptor
+
+        ### Feature Extraction, Matching, Comparison between Previous CAM image and Current CAM image
+        while True:
+
+            frames = pipeline.wait_for_frames()
+            current_color_frames = frames.get_color_frame()
+
+            if not current_color_frames:
+                continue
+
+            current_color_images = np.asanyarray(current_color_frames.get_data())
+
+            current_keypoints = orb.detect(current_color_images, None)
+
+            current_keypoints, current_descriptor = orb.compute(current_color_images, current_keypoints)
+
+            matches = brute_force_matcher.match(prev_descriptor, current_descriptor)
+
+            matches = sorted(matches, key = lambda x:x.distance)
+
+            print('Top 10 feature matching points between current image and previous image on 640x480 image frame')
+            for i in range(10):
+
+                # 'query' represents the reference image used for feature matching
+                # 'train' represents the target/input image used for feature matching
+                print(str(prev_keypoints[matches[i].queryIdx].pt[0]) + ', ' + str(prev_keypoints[matches[i].queryIdx].pt[1]) + '---' + str(current_keypoints[matches[i].trainIdx].pt[0]) + ', ' + str(current_keypoints[matches[i].trainIdx].pt[1]))
+
+            print('')
+
+            # Hamming distance counts the number of 1 from the results of XOR operation between two binary strings.
+            # Hamming distance is used to determine the distance or similarities between two binary strings.
+            # Since ORB produces binary string-based descriptors, Brute Force Matcher has to use Hamming distance for feature matching calculation.
+            print('Top 10 Hamming distance value of Top 10 feature matching points')
+            for i in range(10):
+
+                print(matches[i].distance)
+
+            print('')
+
+            match_result_img = cv.drawMatches(prev_color_images, prev_keypoints, current_color_images, current_keypoints, matches[:10], None, flags=2)
+
+            # Update reference image for feature matching
+            prev_color_images = current_color_images
+            prev_keypoints = current_keypoints
+            prev_descriptor = current_descriptor
+
+            cv.namedWindow('Real-time Brute Force Matching Result', cv.WINDOW_AUTOSIZE)
+            cv.imshow('Real-time Brute Force Matching Result', match_result_img)
+            cv.waitKey(0)   # Press Enter to continue for next image frames
+
+    finally:
+        pipeline.stop()
