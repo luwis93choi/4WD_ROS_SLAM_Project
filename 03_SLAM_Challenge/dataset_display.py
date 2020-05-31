@@ -4,6 +4,8 @@ import cv2
 
 import numpy as np
 
+import h5py
+
 train_1f_dataset_path = './indoor_dataset/dataset/1f/train'
 train_1f_dataset_date = sorted(os.listdir(train_1f_dataset_path))
 train_1f_dataset_image_path = ''
@@ -70,6 +72,11 @@ for i in range(len(train_1f_dataset_pack_list)):
 
     #print(train_1f_dataset_image_list_by_ID)
 
+    for j in range(len(train_1f_camera_id_list)):
+
+        print(train_1f_camera_id_list[j] + ' : ' + str(len(train_1f_dataset_image_list_by_ID[j])))
+
+    
     display_image_6 = []
     display_image_4 = []
     for j in range(len(train_1f_dataset_image_list_by_ID[0])):
@@ -77,7 +84,7 @@ for i in range(len(train_1f_dataset_pack_list)):
         for k in range(6):
 
             img = cv2.imread(train_1f_dataset_image_path + '/' + train_1f_dataset_image_list_by_ID[k][j], cv2.IMREAD_COLOR)
-            resized_img = cv2.resize(img, None, fx=0.1, fy=0.1, interpolation=cv2.INTER_AREA)
+            resized_img = cv2.resize(img, None, fx=0.15, fy=0.15, interpolation=cv2.INTER_AREA)
 
             display_image_6.append(resized_img)
 
@@ -86,7 +93,7 @@ for i in range(len(train_1f_dataset_pack_list)):
         for k in range(4):
             
             img = cv2.imread(train_1f_dataset_image_path + '/' + train_1f_dataset_image_list_by_ID[k+6][j], cv2.IMREAD_COLOR)
-            resized_img = cv2.resize(img, None, fx=0.1, fy=0.1, interpolation=cv2.INTER_AREA)
+            resized_img = cv2.resize(img, None, fx=0.15, fy=0.15, interpolation=cv2.INTER_AREA)
 
             display_image_4.append(resized_img)
 
@@ -101,9 +108,12 @@ for i in range(len(train_1f_dataset_pack_list)):
 
         display_image_6.clear()
         display_image_4.clear()
+    
 
     # In case that next dataset package is created by different camera IDs, clear the list of camera IDs
     train_1f_camera_id_list.clear()
 
     # Clear train image dataset for next dataset package
     train_1f_dataset_image_list_by_ID.clear()
+
+    print('-----------------------------------------------------------------------------')
