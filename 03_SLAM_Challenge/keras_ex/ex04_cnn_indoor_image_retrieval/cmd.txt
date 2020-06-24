@@ -1,0 +1,11 @@
+datset_convert.py
+: python dataset_convert.py -d '/media/luwis/Linux Workspace/ICSL_Project/Visual SLAM/indoor_dataset/dataset_light/1f/train' -o ~/ICSL_Project/ROS_SLAM_Project/03_SLAM_Challenge/keras_ex/ex04_cnn_indoor_image_retrieval/output/gray_img_list.pickle -t 0.8
+
+train_autoencoder.py
+: python train_autoencoder.py -d ~/ICSL_Project/ROS_SLAM_Project/03_SLAM_Challenge/keras_ex/ex04_cnn_indoor_image_retrieval/output/gray_img_list.pickle -m output/autoencoder.h5 -p output/plot.png --vis output/recon_vis.png
+
+image_indexer.py
+: python image_indexer.py -d ~/ICSL_Project/ROS_SLAM_Project/03_SLAM_Challenge/keras_ex/ex04_cnn_indoor_image_retrieval/output/gray_img_list.pickle --model output/autoencoder.h5 --index output/index.pickle
+
+search.py
+: python search.py -d ~/ICSL_Project/ROS_SLAM_Project/03_SLAM_Challenge/keras_ex/ex04_cnn_indoor_image_retrieval/output/gray_img_list.pickle --model output/autoencoder.h5 --index output/index.pickle
