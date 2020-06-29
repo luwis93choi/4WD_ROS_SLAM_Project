@@ -50,6 +50,66 @@ def perform_search(queryFeatures, index, maxResults=64):
     # Return the list of results
     return results
 
+def feature_matcher(queryImg, candidateImg):
+
+    high_match_Img = []
+
+    orb = cv2.ORB_create()
+
+    brute_force_matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+
+    queryImg_cv = cv2.resize(queryImg,(300, 300))
+
+    queryImg_keypoints = orb.detect(queryImg_cv, None)
+    queryImg_keypoints, queryImg_descriptors = orb.compute(queryImg_cv, queryImg_keypoints)
+
+    candidate_num = 0
+
+    if queryImg_descriptors is not None:
+
+        for img in candidateImg:
+
+            try:
+
+                img_cv = cv2.resize(img, (300, 300))
+
+                candidateImg_keypoints = orb.detect(img_cv, None)
+                candidateImg_keypoints, candidateImg_descriptors = orb.compute(img_cv, candidateImg_keypoints)
+
+                if candidateImg_descriptors is not None:
+
+                    matches = brute_force_matcher.match(queryImg_descriptors, candidateImg_descriptors)
+
+                    #matches = sorted(matches, key=lambda x:x.distance)
+
+                    match_ratio = float(len(matches)) / float(len(queryImg_descriptors))
+
+
+                    if match_ratio >= 0.5:
+
+                        print('Candidate Img[' + str(candidate_num) +'] --- Match Ratio : ' + '{:.2f}'.format(match_ratio) + '/ Matches : ' + str(len(matches)) + ' / candidateImg_descriptors : ' + str(len(candidateImg_descriptors)))
+
+                        high_match_Img.append(img)
+                
+                elif candidateImg_descriptors is None:
+                    # Exception : Case of featureless image
+                    pass
+                    #print('Candidate Img[' + str(candidate_num) +'] is featureless')
+
+                candidate_num += 1
+                
+            finally:
+
+                pass
+
+    elif queryImg_descriptors is None:
+        # Exception : Case of featureless image
+        pass
+        
+    print('----------------------------------------------------------------')
+
+    return high_match_Img
+
 # Construct the argument parser
 ap = argparse.ArgumentParser()
 ap.add_argument('-d', '--dataset', type=str, required=True,
@@ -58,7 +118,7 @@ ap.add_argument('-m', '--model', type=str, required=True,
     help='Path to trained autoencoder')
 ap.add_argument('-i', '--index', type=str, required=True,
     help='Path to features index file')
-ap.add_argument('-s', '--sample', type=int, default=10,
+ap.add_argument('-s', '--sample', type=int, default=20,
     help='Number of testing queries to perform')
 args = vars(ap.parse_args())
 
@@ -99,7 +159,7 @@ for i in queryIdxs:
     # Take the features for the current query image
     # Find all similar images in our dataset and initialize the list of result images
     queryFeatures = features[i]
-    results = perform_search(queryFeatures, index, maxResults=255)
+    results = perform_search(queryFeatures, index, maxResults=100)
     images = []
 
     # Loop over the results
@@ -110,11 +170,17 @@ for i in queryIdxs:
         image = np.dstack([image] * 3)
         images.append(image)
 
+
     # Display the query image
     query = (test_dataset[i] * 255).astype('uint8')
+
+    # Conduct feature matching and pick the images with over 90% match ratio
+    high_match_results = feature_matcher(query, images)
+
     cv2.imshow('Query', query)
 
     # Build a montage from the results and display it
-    montage = build_montages(images, (60, 60), (15, 15))[0]
+    montage = build_montages(high_match_results, (300, 300), (5, 2))[0]
     cv2.imshow('Results', montage)
     cv2.waitKey(0)
+

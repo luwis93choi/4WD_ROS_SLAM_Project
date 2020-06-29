@@ -12,6 +12,8 @@ import pickle
 import random
 import math
 
+from sklearn.model_selection import train_test_split
+
 # Construct the argument parser to receive the path to the dataset
 ap = argparse.ArgumentParser()
 ap.add_argument('-d', '--dataset', type=str, required=True,
@@ -59,8 +61,13 @@ print('Testing data ratio : ' + str(1 - float(args['train_data_ratio'])))
 testing_data_num = int(total_dataset_num) - training_data_num
 print('Training data num : ' + str(testing_data_num))
 
-gray_dataset_train = random.sample(gray_img_mat_set, training_data_num)
-gray_dataset_test = random.sample(gray_img_mat_set, testing_data_num)
+gray_dataset_train = []
+gray_dataset_test = []
+
+gray_dataset_train, gray_dataset_test = train_test_split(gray_img_mat_set, test_size=(1-float(args['train_data_ratio'])), shuffle=True)
+
+#gray_dataset_train = random.sample(gray_img_mat_set, training_data_num)
+#gray_dataset_test = random.sample(gray_img_mat_set, testing_data_num)
 gray_dataset = {"gray_mat_train" : gray_dataset_train, "gray_mat_test" : gray_dataset_test}
 
 cv2.imshow('train_img', gray_dataset["gray_mat_train"][0])

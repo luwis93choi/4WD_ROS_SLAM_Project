@@ -38,7 +38,7 @@ class ConvAutoencoder:
         x = UpSampling2D((2, 2))(x)
         x = Conv2D(16, (3, 3), activation='relu')(x)
         x = UpSampling2D((2, 2))(x)
-        output_img = Conv2D(1, (3, 3), activation='sigmoid', padding='same')(x)
+        output_img = Conv2D(1, (3, 3), activation='relu', padding='same')(x)
 
         autoencoder = Model(input_img, output_img, name='autoencoder')
 
@@ -91,4 +91,22 @@ class ConvAutoencoder:
         autoencoder.summary()
 
         # Return the autoencoder model
+        return autoencoder
+
+
+    @staticmethod
+    def build_color(width, height, depth, latentDim=16):
+
+        chanDim = -1
+
+        input_img = Input(shape=(width, height, depth))
+        x = Flatten()(input_img)
+        encoded = Dense(16)(x)
+        
+        output_img = Dense(16)(x)
+
+        autoencoder = Model(input_img, output_img, name='autoencoder')
+
+        autoencoder.summary()        
+
         return autoencoder
