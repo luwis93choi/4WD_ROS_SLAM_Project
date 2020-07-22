@@ -191,11 +191,13 @@ image_folder_B1 = [
 ### Image Name Compiling
 ImgName_1F = []
 for folderPath in image_folder_1F:
-    ImgName_1F.extend(sorted(os.listdir(folderPath)))
+    ImgName_1F.extend([folderPath + '/' + filename for filename in sorted(os.listdir(folderPath))])
+    #ImgName_1F.extend(sorted(os.listdir(folderPath)))
 
 ImgName_B1 = []
 for folderPath in image_folder_B1:
-    ImgName_B1.extend(sorted(os.listdir(folderPath)))
+    ImgName_B1.extend([folderPath + '/' + filename for filename in sorted(os.listdir(folderPath))])
+    #ImgName_B1.extend(sorted(os.listdir(folderPath)))
 
 ### All Pose Data is compiled at 'groundtruth_1F_total_pose' and 'groundtruth_B1_total_pose'
 
@@ -248,3 +250,29 @@ with open('./dataset_B1.csv', 'w', encoding='utf-8') as dataset_file:
             'Coordinate' : groundtruth_B1_total_pose[i],
             'Quaternion' : groundtruth_B1_total_quaternion[i]
         })
+
+### Cluster Distribution Plotting
+dist_1F = [0] * (int(max(clustering_1F.labels_)) + 1)
+dist_x = range(max(clustering_1F.labels_) + 1)
+for cluster_label in clustering_1F.labels_:
+    dist_1F[cluster_label] += 1
+
+#plt.bar(dist_x, dist_1F)
+plt.hist(clustering_1F.labels_, bins=int(max(clustering_1F.labels_)) + 1)
+plt.title('1F Cluster Distribution')
+plt.xlabel('Cluster Label')
+plt.ylabel('Number of Images in Each Cluster')
+plt.show()
+
+dist_B1 = [0] * (int(max(clustering_B1.labels_)) + 1)
+dist_x = range(max(clustering_B1.labels_) + 1)
+for cluster_label in clustering_B1.labels_:
+    dist_B1[cluster_label] += 1
+
+#plt.bar(dist_x, dist_B1)
+plt.hist(clustering_B1.labels_, bins=int(max(clustering_B1.labels_)) + 1)
+plt.title('B1 Cluster Distribution')
+plt.xlabel('Cluster Label')
+plt.ylabel('Number of Images in Each Cluster')
+plt.show()
+
