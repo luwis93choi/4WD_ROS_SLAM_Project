@@ -14,6 +14,8 @@ import torch.optim as optim
 from torch.autograd import Variable
 from torch.utils.data import Dataset, DataLoader
 
+from matplotlib import pyplot as plt
+
 from datasetLoader import indoorDataset
 
 import csv
@@ -33,72 +35,149 @@ full_dataset_path_list = [
     './dataset_B1.csv'
 ]
 
+nn_type = ['1F', 'B1']
+type_index = 0
+
 ### Split dataset
-dataset_splitter().split(full_dataset_path_list, test_ratio=0.3)
+datasets = dataset_splitter().split(full_dataset_path_list, test_ratio=0.3)
 
-### Prepare Dataloader
-batch_size = 16
-resolution = [224, 224]
+print(datasets)
 
-dataset = indoorDataset(datasetpath='./dataset_1F.csv', 
-                        x_name='ImgName', 
-                        y_name='Cluster_Label',
-                        resolution=resolution)
+### Run through all the datasets (1F and B1)
+for datasetpath in datasets:
 
-train_loader = DataLoader(dataset=dataset,
-                          batch_size=batch_size,
-                          shuffle=True,
-                          num_workers=0)
+    ### Prepare Dataloader
+    BATCH_SIZE = 16
+    EPOCH = 100
+    resolution = [224, 224]
 
-### Prepare Neural Network
-cluster_labels = []
-with open('././dataset_1F.csv', 'r', encoding='utf-8') as dataset_file:
+    transform = transforms.Compose([
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomPerspective(distortion_scale=0.5, p=0.5),
+        transforms.Resize(resolution),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5)),
+    ])
 
-    reader = csv.DictReader(dataset_file)
+    # Prepare the dataloader for training and apply Data Augmentation
+    train_dataset = indoorDataset(datasetpath=datasetpath['train'], 
+                                  x_name='ImgName', 
+                                  y_name='Cluster_Label',
+                                  resolution=resolution,
+                                  transform=transform)
 
-    for dataDict in reader:
+    train_loader = DataLoader(dataset=train_dataset,
+                              batch_size=BATCH_SIZE,
+                              shuffle=True,
+                              num_workers=0)
 
-        cluster_labels.append(int(dataDict['Cluster_Label']))
+    # Prepare the dataloader for validation
+    valid_dataset = indoorDataset(datasetpath=datasetpath['valid'], 
+                                  x_name='ImgName', 
+                                  y_name='Cluster_Label',
+                                  resolution=resolution,
+                                  transform=transform)
 
-label_num = max(cluster_labels) + 1
-print('Number of labels for classification : ' + str(label_num))
+    valid_loader = DataLoader(dataset=valid_dataset,
+                              batch_size=BATCH_SIZE,
+                              shuffle=True,
+                              num_workers=0)
 
-# Load main processing unit for neural network
-PROCESSOR = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    ### Prepare Neural Network
+    cluster_labels = []
+    with open('./dataset_1F.csv', 'r', encoding='utf-8') as dataset_file:
 
-# Create clustering-based localization neural network object
-vgg19 = classifier_nn.Net(label_num)
+        reader = csv.DictReader(dataset_file)
 
-# Bind Neural Network to Processing Unit (GPU if possible)
-vgg19.to(PROCESSOR)
+        for dataDict in reader:
 
-param = list(vgg19.parameters())
+            cluster_labels.append(int(dataDict['Cluster_Label']))
 
-# Display neural network structure using torchsummary
-summary(vgg19, (3, 224, 224))
+    label_num = max(cluster_labels) + 1
+    print('Number of labels for classification : ' + str(label_num))
 
-# Declare training criterion and optimizer
-criterion = nn.CrossEntropyLoss().cuda()
-optimizer = optim.Adam(vgg19.parameters(), lr=0.00001)
+    # Load main processing unit for neural network
+    PROCESSOR = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-### Neural Network Training
+    # Create clustering-based localization neural network object
+    vgg19 = classifier_nn.Net(label_num)
 
-# Set neural network in training mode
-vgg19.train()
-sequence_num = 1
-for input_img, label in train_loader:
+    # Bind Neural Network to Processing Unit (GPU if possible)
+    vgg19.to(PROCESSOR)
 
-    # Prepare input data and output label as pytorch tensor
-    # Bind input data and output label to processing unit, so that neural network and data can be loaded on same processing unit
-    input_img = Variable(input_img.to(PROCESSOR))
-    label = Variable(label.to(PROCESSOR))
+    param = list(vgg19.parameters())
 
-    # Supply data into the network for training
-    output = vgg19(input_img)
+    # Display neural network structure using torchsummary
+    summary(vgg19, (3, 224, 224))
 
-    print('Training Sequence : ' + str(sequence_num) + '/' + str(train_loader.__len__()), end='\r')
-    sys.stdout.flush()
+    # Declare training criterion and optimizer
+    criterion = nn.CrossEntropyLoss().cuda()
+    optimizer = optim.Adam(vgg19.parameters(), lr=0.00001)
 
-    sequence_num += 1
+    ### Neural Network Training
+    
+    # Set neural network in training mode
+    vgg19.train()
 
-torch.save(vgg19, './vgg19_' + str(datetime.datetime.now()))
+    # Train over multiple times
+    loss_val = []
+
+    start_time = str(datetime.datetime.now())
+
+    for epoch in range(EPOCH):
+        
+        running_loss = 0.0
+
+        sequence_num = 1
+        for i, data in enumerate(train_loader, 0):
+
+            #print('Training Sequence : ' + str(sequence_num) + '/' + str(train_loader.__len__()))
+            #sys.stdout.flush()
+
+            # Prepare input data and output label as pytorch tensor
+            # Bind input data and output label to processing unit, so that neural network and data can be loaded on same processing unit
+            input_img, label = data
+
+            input_img = Variable(input_img.to(PROCESSOR))
+            label = Variable(label.to(PROCESSOR))
+
+            # Zero the parameter gradients
+            optimizer.zero_grad()
+
+            # Forward the network while supplying training data
+            output = vgg19(input_img)
+
+            loss = criterion(output, label)
+
+            # Backpropagate the network
+            loss.backward()
+
+            # Optimize the network
+            optimizer.step()
+
+            # Print and save current statistics
+            running_loss += loss.item()
+            print('[%d, %5d / %d] loss: %.3f' %
+                  (epoch + 1, sequence_num, train_loader.__len__(), running_loss))
+            
+            loss_val.append(running_loss)
+            
+            running_loss = 0.0
+
+            sequence_num += 1
+        
+        epoch_complete_time = str(datetime.datetime.now())
+
+        torch.save(vgg19, './vgg19_' + nn_type[type_index] + '_' + epoch_complete_time + '.pth')
+
+        # Plot and save the training results
+        plt.cla()
+        plt.plot(range(len(loss_val)), loss_val)
+        plt.title('Traning Results - Loss Value')
+        plt.xlabel('Training Batch Num')
+        plt.ylabel('Loss')
+        plt.savefig('./Training Results ' + epoch_complete_time + '.png')
+
+    type_index += 1
+
+    del vgg19

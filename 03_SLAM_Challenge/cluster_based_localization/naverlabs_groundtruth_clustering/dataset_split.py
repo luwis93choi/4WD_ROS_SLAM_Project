@@ -8,13 +8,18 @@ class dataset_splitter():
     @staticmethod
     def split(full_set_path, test_ratio=0.3):
 
-        print('[INFO] Splitting dataset / Train ratio : ' + str(1-test_ratio) + ' / Test ratio : ' + str(test_ratio))
-
+        save_files = []
+        
         for datasetPath in full_set_path:
+
+            print('[INFO] Splitting dataset : ' + datasetPath + ' / Train ratio : ' + str(1-test_ratio) + ' / Test ratio : ' + str(test_ratio))
 
             full_set = []
             train_set = []
             valid_set = []
+
+            save_format = {'train' : '', 'valid' : ''}
+
             with open(datasetPath, 'r', encoding='utf-8') as datasetfile:
 
                 reader = csv.DictReader(datasetfile)
@@ -29,7 +34,7 @@ class dataset_splitter():
             base = os.path.splitext(base)[0]
 
             fieldnames = ['ImgName', 'Cluster_Label', 'Coordinate', 'Quaternion']
-            with open('./' + base + '_train.csv', 'w', encoding='utf-8') as datasetfile:
+            with open('./train_' + base + '.csv', 'w', encoding='utf-8') as datasetfile:
 
                 writer = csv.DictWriter(datasetfile, fieldnames=fieldnames)
 
@@ -39,7 +44,9 @@ class dataset_splitter():
 
                     writer.writerow(train_set[i])
 
-            with open('./' + base + '_valid.csv', 'w', encoding='utf-8') as datasetfile:
+                save_format['train'] = './train_' + base + '.csv'
+
+            with open('./valid_' + base + '.csv', 'w', encoding='utf-8') as datasetfile:
 
                 writer = csv.DictWriter(datasetfile, fieldnames=fieldnames)
 
@@ -48,3 +55,9 @@ class dataset_splitter():
                 for i in range(len(valid_set)):
 
                     writer.writerow(valid_set[i])
+
+                save_format['valid'] = './valid_' + base + '.csv'
+
+            save_files.append(save_format)
+
+        return save_files
