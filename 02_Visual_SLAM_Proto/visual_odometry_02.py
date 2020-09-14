@@ -16,6 +16,7 @@ import os
 import sys
 
 from matplotlib import pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 import pyrealsense2 as rs
 
@@ -24,10 +25,9 @@ import math
 print("OpenCV Ver : " + cv.__version__)
 
 class visual_odom:
-
     def __init__(self):
-        self.pose = []
-        self.max_good_match_num = 20
+        self.pose = [[0], [0], [0]]
+        self.max_good_match_num = 2000
 
         self.pipeline = rs.pipeline()
         self.config = rs.config()
@@ -57,6 +57,9 @@ class visual_odom:
         self.prev_goodMatches = []
         self.prev_cloud = None
 
+        self.prev_RotateM = None
+        self.prev_TranslateM = None
+
         self.current_frames = None
         self.current_image = None
         self.current_keypoints = None
@@ -67,6 +70,11 @@ class visual_odom:
         self.current_des2 = []
         self.current_goodMatches = []
         self.current_cloud = None
+        
+        self.current_RotateM = None
+        self.current_TranslateM = None
+
+        self.relative_scale = 0.0
 
         print(rs.intrinsics())
         print(rs.extrinsics())
@@ -110,6 +118,9 @@ class visual_odom:
 
         retval, Rotation_Mat, Translation_Mat, newMask = cv.recoverPose(Essential_Mat, self.prev_pts1, self.prev_pts2, focal=1.93, pp=(rs.intrinsics().ppx, rs.intrinsics().ppy))
 
+        self.prev_RotateM = Rotation_Mat
+        self.prev_TranslateM = Translation_Mat
+
         Transformation_Mat = np.concatenate((Rotation_Mat, Translation_Mat), axis=1)
         Transformation_Mat = np.concatenate((Transformation_Mat, [[0, 0, 0, 1]]), axis=0)
 
@@ -125,7 +136,7 @@ class visual_odom:
         self.prev_pts1 = self.prev_pts1.reshape(2, -1)
         self.prev_pts2 = self.prev_pts2.reshape(2, -1)
 
-        prev_cloud = cv.triangulatePoints(P0, P1, self.prev_pts1, self.prev_pts2).reshape(-1, 4)[:, :3]
+        self.prev_cloud = cv.triangulatePoints(P0, P1, self.prev_pts1, self.prev_pts2).reshape(-1, 4)[:, :3]
 
     def processFrames(self):
 
@@ -147,7 +158,7 @@ class visual_odom:
             self.current_pts2.append(self.current_keypoints[m.trainIdx].pt)
 
             self.current_des1.append(self.prev_descriptors[m.queryIdx])
-            self.current_des2.append(self.current_descriptors[m.queryIdx])
+            self.current_des2.append(self.current_descriptors[m.trainIdx])
 
         self.current_pts1 = np.float32(self.current_pts1)
         self.current_pts2 = np.float32(self.current_pts2)
@@ -171,14 +182,97 @@ class visual_odom:
         self.current_pts1 = self.current_pts1.reshape(2, -1)
         self.current_pts2 = self.current_pts2.reshape(2, -1)
 
-        current_cloud = cv.triangulatePoints(P0, P1, self.current_pts1, self.current_pts2).reshape(-1, 4)[:, :3]
+        self.current_cloud = cv.triangulatePoints(P0, P1, self.current_pts1, self.current_pts2).reshape(-1, 4)[:, :3]
+
+        ### Relative scale calculation along 3 image frames using 3-D points
+        min_idx = min([self.current_cloud.shape[0], self.prev_cloud.shape[0]])
+
+        print(min_idx)
+
+        ratios = []
+
+        for i in range(min_idx):
+            if i > 0:
+                Xk = self.current_cloud[i]
+                p_Xk = self.current_cloud[i-1]
+
+                Xk_1 = self.prev_cloud[i]
+                p_Xk_1 = self.prev_cloud[i-1]
+
+                if np.linalg.norm(p_Xk - Xk) != 0:
+                    ratios.append(np.linalg.norm(p_Xk_1 - Xk_1) / np.linalg.norm(p_Xk - Xk))
+        
+        self.relative_scale = np.median(ratios)
+
+        print('Relative Scale : ' + str(self.relative_scale))
+
+        ### Accept only dominant forward motion
+        if ((Translation_Mat[2][0] > Translation_Mat[0][0]) and (Translation_Mat[2][0] > Translation_Mat[1][0])):
+            self.prev_TranslateM = Translation_Mat + self.relative_scale * Rotation_Mat.dot(self.prev_TranslateM)
+            self.prev_RotateM = Rotation_Mat.dot(self.prev_RotateM)
+
+        print('[Updated Pose]')
+        print(str(self.prev_TranslateM))
+
+        '''
+        match_result_img = cv.drawMatches(vOdom.prev_image, vOdom.prev_keypoints, vOdom.current_image, vOdom.current_keypoints, vOdom.current_goodMatches, None, flags=2)
+        cv.namedWindow('Real-time Brute Force Matching Result', cv.WINDOW_AUTOSIZE)
+        cv.imshow('Real-time Brute Force Matching Result', match_result_img)
+        cv.waitKey(0)   # Press Enter to continue for next image frames
+        '''
+        ### Update current values as previous values for next frame
+        print('---Update previous values ---')
+        self.prev_cloud = self.current_cloud
+        self.prev_image = self.current_image
+        self.prev_descriptors = self.current_descriptors
+        self.prev_keypoints = self.current_keypoints
+
+        ### Initialize appended lists as empty for next frame
+        self.current_pts1 = []
+        self.current_pts2 = []
+        self.current_des1 = []
+        self.current_des2 = []
+        self.current_goodMatches = []
 
 vOdom = visual_odom()
 
 vOdom.processFirstFrame()
 vOdom.processSecondFrame()
-vOdom.processFrames()
 
-cv.namedWindow('Real-time Brute Force Matching Result', cv.WINDOW_AUTOSIZE)
-cv.imshow('Real-time Brute Force Matching Result', vOdom.pprev_image)
-cv.waitKey(0)   # Press Enter to continue for next image frames
+#map = plt.figure()
+#map_ax = Axes3D(map)
+
+#map_ax.set_xlim3d([-100.0, 100.0])
+#map_ax.set_ylim3d([-100.0, 100.0])
+#map_ax.set_zlim3d([-100.0, 100.0])
+
+plt.figure()
+plt.xlim(-100.0, 100.0)
+plt.ylim(-100.0, 100.0)
+plt.grid()
+
+x = []
+y = []
+z = []
+
+while True:
+    vOdom.processFrames()
+    
+    print('X : ' + str(vOdom.prev_TranslateM[0][0]))
+    x.append(vOdom.prev_TranslateM[0][0])
+    
+    print('Y : ' + str(vOdom.prev_TranslateM[1][0]))
+    y.append(vOdom.prev_TranslateM[1][0]) 
+    
+    print('Z : ' + str(vOdom.prev_TranslateM[2][0]))
+    z.append(vOdom.prev_TranslateM[2][0]) 
+    
+    #hl, = map_ax.plot3D(vOdom.prev_TranslateM[0], vOdom.prev_TranslateM[1], vOdom.prev_TranslateM[2])
+    
+    #hl.set_xdata(x)
+    #hl.set_ydata(y)
+    #hl.set_3d_properties(z)
+    plt.scatter(x, y)
+    plt.draw()
+    plt.show(block=False)
+    plt.pause(0.001)
