@@ -1,0 +1,2 @@
+# Reference 01 (Optical Flow-based Visual Odometry) : https://apollack11.github.io/advanced-computer-vision.html
+# Reference 02 (Optical Flow and Camera Velocity) : https://robotacademy.net.au/lesson/optical-flow-and-camera-velocity/

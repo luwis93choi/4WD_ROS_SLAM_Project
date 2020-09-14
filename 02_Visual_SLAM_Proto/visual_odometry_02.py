@@ -109,7 +109,7 @@ class visual_odom:
             self.prev_pts2.append(self.prev_keypoints[m.trainIdx].pt)
 
             self.prev_des1.append(self.pprev_descriptors[m.queryIdx])
-            self.prev_des2.append(self.prev_descriptors[m.queryIdx])
+            self.prev_des2.append(self.prev_descriptors[m.trainIdx])
 
         self.prev_pts1 = np.float32(self.prev_pts1)
         self.prev_pts2 = np.float32(self.prev_pts2)
@@ -118,8 +118,8 @@ class visual_odom:
 
         retval, Rotation_Mat, Translation_Mat, newMask = cv.recoverPose(Essential_Mat, self.prev_pts1, self.prev_pts2, focal=1.93, pp=(rs.intrinsics().ppx, rs.intrinsics().ppy))
 
-        self.prev_RotateM = Rotation_Mat
-        self.prev_TranslateM = Translation_Mat
+        self.current_RotateM = Rotation_Mat
+        self.current_TranslateM = Translation_Mat
 
         Transformation_Mat = np.concatenate((Rotation_Mat, Translation_Mat), axis=1)
         Transformation_Mat = np.concatenate((Transformation_Mat, [[0, 0, 0, 1]]), axis=0)
@@ -208,18 +208,12 @@ class visual_odom:
 
         ### Accept only dominant forward motion
         if ((Translation_Mat[2][0] > Translation_Mat[0][0]) and (Translation_Mat[2][0] > Translation_Mat[1][0])):
-            self.prev_TranslateM = Translation_Mat + self.relative_scale * Rotation_Mat.dot(self.prev_TranslateM)
-            self.prev_RotateM = Rotation_Mat.dot(self.prev_RotateM)
+            self.current_TranslateM = self.current_TranslateM + self.relative_scale * self.current_RotateM.dot(Translation_Mat)
+            self.current_RotateM = Rotation_Mat.dot(self.current_RotateM)
 
         print('[Updated Pose]')
-        print(str(self.prev_TranslateM))
+        print(str(self.current_TranslateM))
 
-        '''
-        match_result_img = cv.drawMatches(vOdom.prev_image, vOdom.prev_keypoints, vOdom.current_image, vOdom.current_keypoints, vOdom.current_goodMatches, None, flags=2)
-        cv.namedWindow('Real-time Brute Force Matching Result', cv.WINDOW_AUTOSIZE)
-        cv.imshow('Real-time Brute Force Matching Result', match_result_img)
-        cv.waitKey(0)   # Press Enter to continue for next image frames
-        '''
         ### Update current values as previous values for next frame
         print('---Update previous values ---')
         self.prev_cloud = self.current_cloud
@@ -247,8 +241,8 @@ vOdom.processSecondFrame()
 #map_ax.set_zlim3d([-100.0, 100.0])
 
 plt.figure()
-plt.xlim(-100.0, 100.0)
-plt.ylim(-100.0, 100.0)
+plt.xlim(-50.0, 50.0)
+plt.ylim(-50.0, 50.0)
 plt.grid()
 
 x = []
@@ -258,21 +252,21 @@ z = []
 while True:
     vOdom.processFrames()
     
-    print('X : ' + str(vOdom.prev_TranslateM[0][0]))
-    x.append(vOdom.prev_TranslateM[0][0])
+    print('X : ' + str(vOdom.current_TranslateM[0][0]))
+    x.append(vOdom.current_TranslateM[0][0])
     
-    print('Y : ' + str(vOdom.prev_TranslateM[1][0]))
-    y.append(vOdom.prev_TranslateM[1][0]) 
+    print('Y : ' + str(vOdom.current_TranslateM[1][0]))
+    y.append(vOdom.current_TranslateM[1][0]) 
     
-    print('Z : ' + str(vOdom.prev_TranslateM[2][0]))
-    z.append(vOdom.prev_TranslateM[2][0]) 
+    print('Z : ' + str(vOdom.current_TranslateM[2][0]))
+    z.append(vOdom.current_TranslateM[2][0]) 
     
     #hl, = map_ax.plot3D(vOdom.prev_TranslateM[0], vOdom.prev_TranslateM[1], vOdom.prev_TranslateM[2])
     
     #hl.set_xdata(x)
     #hl.set_ydata(y)
     #hl.set_3d_properties(z)
-    plt.scatter(x, y)
+    plt.scatter(vOdom.current_TranslateM[0][0], vOdom.current_TranslateM[1][0])
     plt.draw()
     plt.show(block=False)
     plt.pause(0.001)
