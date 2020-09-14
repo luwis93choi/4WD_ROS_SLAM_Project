@@ -160,8 +160,13 @@ try:
 
         P1 = np.hstack((Rotation_Mat, Translation_Mat))
         P1 = K.dot(P1)
-        cloud_new = cv.triangulatePoints(P0, P1, pts1.T, pts2.T)
-        threeD_coords = cv.convertPointsFromHomogeneous(cloud_new.transpose())
+        
+        pts1 = pts1.reshape(2, -1)
+        pts2 = pts2.reshape(2, -1)
+        
+        cloud_new = cv.triangulatePoints(P0, P1, pts1, pts2).reshape(-1, 4)[:, :3]
+        #threeD_coords = cv.convertPointsFromHomogeneous(cloud_new.transpose())
+        
         ###################################################################
 
         print('---------------------------------------------')
@@ -169,7 +174,7 @@ try:
         print(Translation_Mat)
         print('---------------------------------------------')
         #print(transformation_Mat)
-        print(threeD_coords)
+        print(cloud_new)
         print('---------------------------------------------')
 
         pose = np.dot(transformation_Mat, pose)
