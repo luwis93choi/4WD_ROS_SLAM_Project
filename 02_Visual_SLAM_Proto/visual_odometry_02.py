@@ -76,6 +76,8 @@ class visual_odom:
 
         self.relative_scale = 0.0
 
+        self.result_img = None
+
         print(rs.intrinsics())
         print(rs.extrinsics())
 
@@ -214,6 +216,8 @@ class visual_odom:
         print('[Updated Pose]')
         print(str(self.current_TranslateM))
 
+        self.result_img = cv.drawMatches(self.prev_image, self.prev_keypoints, self.current_image, self.current_keypoints, self.current_goodMatches, None, flags=2)
+
         ### Update current values as previous values for next frame
         print('---Update previous values ---')
         self.prev_cloud = self.current_cloud
@@ -233,17 +237,7 @@ vOdom = visual_odom()
 vOdom.processFirstFrame()
 vOdom.processSecondFrame()
 
-#map = plt.figure()
-#map_ax = Axes3D(map)
-
-#map_ax.set_xlim3d([-100.0, 100.0])
-#map_ax.set_ylim3d([-100.0, 100.0])
-#map_ax.set_zlim3d([-100.0, 100.0])
-
-plt.figure()
-plt.xlim(-50.0, 50.0)
-plt.ylim(-50.0, 50.0)
-plt.grid()
+fig = plt.figure()
 
 x = []
 y = []
@@ -260,13 +254,15 @@ while True:
     
     print('Z : ' + str(vOdom.current_TranslateM[2][0]))
     z.append(vOdom.current_TranslateM[2][0]) 
-    
-    #hl, = map_ax.plot3D(vOdom.prev_TranslateM[0], vOdom.prev_TranslateM[1], vOdom.prev_TranslateM[2])
-    
-    #hl.set_xdata(x)
-    #hl.set_ydata(y)
-    #hl.set_3d_properties(z)
-    plt.scatter(vOdom.current_TranslateM[0][0], vOdom.current_TranslateM[1][0])
+
+    ax1 = fig.add_subplot(1, 2, 1)
+    ax1.set_xlim(-50.0, 50.0)
+    ax1.set_ylim(-50.0, 50.0)
+    ax1.scatter(vOdom.current_TranslateM[0][0], vOdom.current_TranslateM[1][0])
+
+    ax2 = fig.add_subplot(1, 2, 2)
+    ax2.imshow(vOdom.result_img)
+
     plt.draw()
     plt.show(block=False)
-    plt.pause(0.001)
+    plt.pause(0.1)
