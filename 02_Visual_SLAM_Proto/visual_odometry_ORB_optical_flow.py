@@ -6,6 +6,7 @@ import sys
 import pyrealsense2 as rs
 
 from matplotlib import pyplot as plt
+from matplotlib import gridspec
 from mpl_toolkits.mplot3d import Axes3D
 
 from time import sleep
@@ -140,7 +141,7 @@ def img_buffer_feature_extraction(_image_buffer, _image_feature_buffer, _feature
 
 
     print('[3rd Image Frame Process]')
-    current_keypoints = _feature_extractor.detect(_image_buffer[0], None)
+    current_keypoints = _feature_extractor.detect(_image_buffer[2], None)
     current_keypoints, current_descriptors = _feature_extractor.compute(_image_buffer[2], current_keypoints)
     _image_feature_buffer[2]['keypoints'] = current_keypoints
     _image_feature_buffer[2]['descriptors'] = current_descriptors
@@ -150,10 +151,14 @@ def img_buffer_feature_extraction(_image_buffer, _image_feature_buffer, _feature
 
 def img_buffer_feature_matching(_image_feature_buffer, _feature_matcher):
 
-    common_feature_buffer = [{'keypoints' : None, 'descriptors' : None}, 
-                             {'keypoints' : None, 'descriptors' : None}, 
-                             {'keypoints' : None, 'descriptors' : None}]
+    common_feature_buffer = [{'keypoints' : None, 'keypoints_pts' : None}, 
+                             {'keypoints' : None, 'keypoints_pts' : None}, 
+                             {'keypoints' : None, 'keypoints_pts' : None}]
  
+    geometric_unit_changes = {'R_pprev_prev' : None, 'T_pprev_prev' : None, 
+                              'R_prev_current' : None, 'T_prev_current' : None}
+
+    ### Filtering common feature keypoints by comparing the descriptors from 3 consecutive images ###
     pprev_feature_idx = []
     prev_feature_idx = []
     current_feature_idx = []
@@ -195,11 +200,86 @@ def img_buffer_feature_matching(_image_feature_buffer, _feature_matcher):
 
         pprev_match_keypoints.append(_image_feature_buffer[0]['keypoints'][pprev_feature_idx[m.queryIdx]])
 
+    pprev_match_keypoints_pts = []
+    prev_match_keypoints_pts = []
+    current_match_keypoints_pts = []
+
+    for m in pprev_prev_current_feature_matches:
+
+        current_match_keypoints_pts.append(_image_feature_buffer[2]['keypoints'][m.trainIdx].pt)
+
+        prev_match_keypoints_pts.append(_image_feature_buffer[1]['keypoints'][prev_feature_idx[m.queryIdx]].pt)
+
+        pprev_match_keypoints_pts.append(_image_feature_buffer[0]['keypoints'][pprev_feature_idx[m.queryIdx]].pt)
+
+    common_feature_buffer[0]['keypoints'] = pprev_match_keypoints
+    common_feature_buffer[0]['keypoints_pts'] = pprev_match_keypoints_pts
+
+    common_feature_buffer[1]['keypoints'] = prev_match_keypoints
+    common_feature_buffer[1]['keypoints_pts'] = prev_match_keypoints_pts
+
+    common_feature_buffer[2]['keypoints'] = current_match_keypoints
+    common_feature_buffer[2]['keypoints_pts'] = current_match_keypoints_pts
+
     print('current_match_keypoints : ', len(current_match_keypoints))
     print('prev_match_keypoints : ', len(prev_match_keypoints))
     print('pprev_match_keypoints : ', len(pprev_match_keypoints))
 
-    ### Draw matches over 3 consecutive images ################################
+    ### Essential Matrix Calcuation & Rotation/Translation Matrix Calculation ###
+    Essential_Mat_pprev_prev, mask_pprev_prev = cv.findEssentialMat(np.int32(pprev_match_keypoints_pts), 
+                                                                    np.int32(prev_match_keypoints_pts),
+                                                                    focal=focal_length,
+                                                                    pp=(cx, cy),
+                                                                    method=cv.RANSAC, prob=0.999, threshold=1.0)
+
+    Essential_Mat_prev_current, mask_prev_current = cv.findEssentialMat(np.int32(prev_match_keypoints_pts), 
+                                                                        np.int32(current_match_keypoints_pts),
+                                                                        focal=focal_length,
+                                                                        pp=(cx, cy),
+                                                                        method=cv.RANSAC, prob=0.999, threshold=1.0)
+
+    retval, Rotation_Mat_pprev_prev, Translation_Mat_pprev_prev, r_mask_pprev_prev = cv.recoverPose(Essential_Mat_pprev_prev,
+                                                                                                    np.int32(pprev_match_keypoints_pts),
+                                                                                                    np.int32(prev_match_keypoints_pts),
+                                                                                                    focal=focal_length,
+                                                                                                    pp=(cx, cy))
+
+    retval, Rotation_Mat_prev_current, Translation_Mat_prev_current, r_mask_prev_current = cv.recoverPose(Essential_Mat_prev_current,
+                                                                                                          np.int32(prev_match_keypoints_pts),
+                                                                                                          np.int32(current_match_keypoints_pts),
+                                                                                                          focal=focal_length,
+                                                                                                          pp=(cx, cy))
+
+    geometric_unit_changes['R_pprev_prev'] = Rotation_Mat_pprev_prev
+    geometric_unit_changes['T_pprev_prev'] = Translation_Mat_pprev_prev
+    geometric_unit_changes['R_prev_current'] = Rotation_Mat_prev_current
+    geometric_unit_changes['T_prev_current'] = Translation_Mat_prev_current
+
+    print('[R_pprev_prev]--------------------------------------------------')
+    print(Rotation_Mat_pprev_prev)
+    print('[T_pprev_prev]--------------------------------------------------')
+    print(Translation_Mat_pprev_prev)
+    print('[R_prev_current]------------------------------------------------')
+    print(Rotation_Mat_prev_current)
+    print('[T_prev_current]------------------------------------------------')
+    print(Translation_Mat_prev_current)
+    print('----------------------------------------------------------------')
+
+    ### [Not Used] Common Feature Selection Optimization : Choose the common viable features without pixel coordinate jumps ###
+    pprev_prev_feature_pixel_distance = []
+    prev_current_feature_pixel_distance = []
+    
+    for i in range(len(pprev_prev_current_feature_matches)):
+        pprev_prev_feature_pixel_distance.append(np.linalg.norm(np.array(pprev_match_keypoints[i].pt) - np.array(prev_match_keypoints[i].pt)))
+        prev_current_feature_pixel_distance.append(np.linalg.norm(np.array(prev_match_keypoints[i].pt) - np.array(current_match_keypoints[i].pt)))
+
+    #print('pprev_prev_feature_pixel_distance : ', pprev_prev_feature_pixel_distance)
+    #print('prev_current_feature_pixel_distance : ', prev_current_feature_pixel_distance)
+
+    pprev_prev_mean = np.mean(pprev_prev_feature_pixel_distance)
+    prev_current_mean = np.mean(prev_current_feature_pixel_distance)
+
+    ### Setup match result image with the common features over 3 consecutive images #########
     img_pprev = image_buffer[0].copy()
     img_prev = image_buffer[1].copy()
     img_curr = image_buffer[2].copy()
@@ -220,15 +300,37 @@ def img_buffer_feature_matching(_image_feature_buffer, _feature_matcher):
         full_view = cv.line(full_view, tuple([np.int32(prev_match_keypoints[i].pt)[0] + 640, np.int32(prev_match_keypoints[i].pt)[1]]), 
                                        tuple([np.int32(current_match_keypoints[i].pt)[0] + 640*2, np.int32(current_match_keypoints[i].pt)[1]]), (0, 0, 255), 1)
 
-    cv.imshow('Images with common feature points [ppev, prev, current]', full_view)    
-    cv.waitKey(0)
-    ##############################################################################
+    ### Draw match result image with feature pixel distance distribution histogram #####
+    grid = plt.GridSpec(nrows=2, ncols=2)
+    
+    graph_1 = plt.subplot(grid[0, 0])
+    graph_1.hist(pprev_prev_feature_pixel_distance)
+    graph_1.title.set_text('Feature Pixel Distance Distribution (pprev - prev)')
+    graph_1.set_xlim(0, 800)
+    graph_1.axvline(pprev_prev_mean, color='black', linestyle='dashed', linewidth=1)
+    
+    graph_2 = plt.subplot(grid[0, 1])
+    graph_2.hist(prev_current_feature_pixel_distance)
+    graph_2.title.set_text('Feature Pixel Distance Distribution (prev - current)')
+    graph_2.set_xlim(0, 800)
+    graph_2.axvline(prev_current_mean, color='black', linestyle='dashed', linewidth=1)
+    
+    graph_3 = plt.subplot(grid[1,0:])
+    graph_3.imshow(full_view)
+    graph_3.title.set_text('Feature Matching Results over 3 Consecutive Images')
+    
+    #plt.show()
 
-    return common_feature_buffer
+    
+    plt.draw()
+    plt.show(block=False)
+    plt.pause(0.001)
+    
+    return common_feature_buffer, geometric_unit_changes
 
-'''
 def img_common3Dcloud_triangulate():
 
+'''
 def pose_estimate():
 '''
 
@@ -238,7 +340,7 @@ while True:
 
     img_buffer_feature_extraction(image_buffer, img_features_buffer, orb)
 
-    img_buffer_feature_matching(img_features_buffer, BF_Matcher)
+    common_features, geometric_unit_changes = img_buffer_feature_matching(img_features_buffer, BF_Matcher)
     '''
     full_view = np.hstack((image_buffer[0], image_buffer[1], image_buffer[2]))
     
