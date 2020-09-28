@@ -33,7 +33,7 @@ profile = realsense_pipeline.start(config)
 # Camera intrinsic matrix params for 2D-3D triangulation
 # Acquiring Realsense Factory Default Intrinsic Parameters : https://github.com/IntelRealSense/librealsense/issues/2930
 intr = profile.get_stream(rs.stream.color).as_video_stream_profile().get_intrinsics()
-focal_length = 1.93
+focal_length = intr.fx
 fx = intr.fx
 fy = intr.fy
 cx = intr.ppx
@@ -61,7 +61,7 @@ top_max_matches_num = 10
 lk_params = dict(winSize = (21, 21),
                  maxLevel = 3,
                  criteria = (cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 30, 0.01))
-'''
+
 pose_T = np.array([[0],
                    [0],
                    [0]])
@@ -69,13 +69,6 @@ pose_T = np.array([[0],
 pose_R = np.array([[1, 0, 0],
                    [0, 1, 0],
                    [0, 0, 1]])
-'''
-
-match_img_1 = None
-match_img_2 = None
-
-pose_T = None
-pose_R = None
 
 def load_realsense_frames(_image_buffer, _image_pipeline):
 
@@ -226,44 +219,39 @@ def img_buffer_feature_matching(_image_feature_buffer, _feature_matcher):
     print('pprev_match_keypoints : ', len(pprev_match_keypoints))
 
     ### Essential Matrix Calcuation & Rotation/Translation Matrix Calculation ###
-    Essential_Mat_pprev_prev, mask_pprev_prev = cv.findEssentialMat(np.int32(pprev_match_keypoints_pts), 
-                                                                    np.int32(prev_match_keypoints_pts),
-                                                                    focal=focal_length,
-                                                                    pp=(cx, cy),
+    Essential_Mat_pprev_prev, mask_pprev_prev = cv.findEssentialMat(np.int32(prev_match_keypoints_pts), 
+                                                                    np.int32(pprev_match_keypoints_pts),
+                                                                    cameraMatrix=intrinsic_CAM_Mat,
                                                                     method=cv.RANSAC, prob=0.999, threshold=1.0)
 
-    Essential_Mat_prev_current, mask_prev_current = cv.findEssentialMat(np.int32(prev_match_keypoints_pts), 
-                                                                        np.int32(current_match_keypoints_pts),
-                                                                        focal=focal_length,
-                                                                        pp=(cx, cy),
+    Essential_Mat_prev_current, mask_prev_current = cv.findEssentialMat(np.int32(current_match_keypoints_pts), 
+                                                                        np.int32(prev_match_keypoints_pts),
+                                                                        cameraMatrix=intrinsic_CAM_Mat,
                                                                         method=cv.RANSAC, prob=0.999, threshold=1.0)
 
     retval, Rotation_Mat_pprev_prev, Translation_Mat_pprev_prev, r_mask_pprev_prev = cv.recoverPose(Essential_Mat_pprev_prev,
-                                                                                                    np.int32(pprev_match_keypoints_pts),
                                                                                                     np.int32(prev_match_keypoints_pts),
-                                                                                                    focal=focal_length,
-                                                                                                    pp=(cx, cy))
+                                                                                                    np.int32(pprev_match_keypoints_pts),
+                                                                                                    cameraMatrix=intrinsic_CAM_Mat)
 
     retval, Rotation_Mat_prev_current, Translation_Mat_prev_current, r_mask_prev_current = cv.recoverPose(Essential_Mat_prev_current,
-                                                                                                          np.int32(prev_match_keypoints_pts),
                                                                                                           np.int32(current_match_keypoints_pts),
-                                                                                                          focal=focal_length,
-                                                                                                          pp=(cx, cy))
+                                                                                                          np.int32(prev_match_keypoints_pts),
+                                                                                                          cameraMatrix=intrinsic_CAM_Mat)
 
     geometric_unit_changes['R_pprev_prev'] = Rotation_Mat_pprev_prev
     geometric_unit_changes['T_pprev_prev'] = Translation_Mat_pprev_prev
     geometric_unit_changes['R_prev_current'] = Rotation_Mat_prev_current
     geometric_unit_changes['T_prev_current'] = Translation_Mat_prev_current
 
-    print('[R_pprev_prev]--------------------------------------------------')
+    print('[R_pprev_prev]')
     print(Rotation_Mat_pprev_prev)
-    print('[T_pprev_prev]--------------------------------------------------')
+    print('[T_pprev_prev]')
     print(Translation_Mat_pprev_prev)
-    print('[R_prev_current]------------------------------------------------')
+    print('[R_prev_current]')
     print(Rotation_Mat_prev_current)
-    print('[T_prev_current]------------------------------------------------')
+    print('[T_prev_current]')
     print(Translation_Mat_prev_current)
-    print('----------------------------------------------------------------')
 
     ### [Not Used] Common Feature Selection Optimization : Choose the common viable features without pixel coordinate jumps ###
     pprev_prev_feature_pixel_distance = []
@@ -300,6 +288,7 @@ def img_buffer_feature_matching(_image_feature_buffer, _feature_matcher):
         full_view = cv.line(full_view, tuple([np.int32(prev_match_keypoints[i].pt)[0] + 640, np.int32(prev_match_keypoints[i].pt)[1]]), 
                                        tuple([np.int32(current_match_keypoints[i].pt)[0] + 640*2, np.int32(current_match_keypoints[i].pt)[1]]), (0, 0, 255), 1)
 
+    '''
     ### Draw match result image with feature pixel distance distribution histogram #####
     grid = plt.GridSpec(nrows=2, ncols=2)
     
@@ -321,18 +310,80 @@ def img_buffer_feature_matching(_image_feature_buffer, _feature_matcher):
     
     #plt.show()
 
-    
     plt.draw()
     plt.show(block=False)
     plt.pause(0.001)
-    
+    '''
     return common_feature_buffer, geometric_unit_changes
 
-def img_common3Dcloud_triangulate():
+def img_common3Dcloud_triangulate(_common_feature_buffer, _geometric_unit_changes):
 
-'''
-def pose_estimate():
-'''
+    pprev_match_keypoints_pts = np.float32(_common_feature_buffer[0]['keypoints_pts']).reshape(2, -1)
+    prev_match_keypoints_pts = np.float32(_common_feature_buffer[1]['keypoints_pts']).reshape(2, -1)
+    current_match_keypoints_pts = np.float32(_common_feature_buffer[2]['keypoints_pts']).reshape(2, -1)
+
+    Rotation_Mat_pprev_prev = _geometric_unit_changes['R_pprev_prev']
+    Translation_Mat_pprev_prev = _geometric_unit_changes['T_pprev_prev']
+    Rotation_Mat_prev_current = _geometric_unit_changes['R_prev_current']
+    Translation_Mat_prev_current = _geometric_unit_changes['T_prev_current']
+
+    print('[INFO] pprev-prev Triangulation')
+    ### Triangluation between pprev and prev
+    # The canonical matrix (set as the origin)
+    P0 = np.array([[1, 0, 0, 0],
+                   [0, 1, 0, 0],
+                   [0, 0, 1, 0]])
+    P0 = intrinsic_CAM_Mat.dot(P0)
+    # Rotated and translated using P0 as the reference point
+    P1 = np.hstack((Rotation_Mat_pprev_prev, Translation_Mat_pprev_prev))
+    P1 = intrinsic_CAM_Mat.dot(P1)
+
+    pprev_prev_cloud = cv.triangulatePoints(P0, P1, pprev_match_keypoints_pts, prev_match_keypoints_pts).reshape(-1, 4)[:, :3]
+
+    print('[INFO] prev-current Triangulation')
+    ### Triangluation between prev and current
+    # The canonical matrix (set as the origin)
+    P0 = np.array([[1, 0, 0, 0],
+                   [0, 1, 0, 0],
+                   [0, 0, 1, 0]])
+    P0 = intrinsic_CAM_Mat.dot(P0)
+    # Rotated and translated using P0 as the reference point
+    P1 = np.hstack((Rotation_Mat_prev_current, Translation_Mat_prev_current))
+    P1 = intrinsic_CAM_Mat.dot(P1)
+
+    prev_current_cloud = cv.triangulatePoints(P0, P1, prev_match_keypoints_pts, current_match_keypoints_pts).reshape(-1, 4)[:, :3]
+
+    return pprev_prev_cloud, prev_current_cloud
+
+def pose_estimate(_pose_T, _pose_R, _prev_current_Translation_Mat, _prev_current_Rotation_Mat, _pprev_prev_cloud, _prev_current_cloud):
+
+    print('pprev-prev cloud num : ', len(_pprev_prev_cloud))
+    print('prev-current cloud num : ', len(_prev_current_cloud))
+
+    ratios = []
+    for i in range(len(_prev_current_cloud)):
+        if i > 0:
+            current_Xk1 = _prev_current_cloud[i]
+            current_Xk2 = _prev_current_cloud[i-1]
+
+            prev_Xk1 = _pprev_prev_cloud[i]
+            prev_Xk2 = _pprev_prev_cloud[i-1]
+
+            if (np.linalg.norm(current_Xk1 - current_Xk2) != 0):
+                ratios.append(np.linalg.norm(prev_Xk1 - prev_Xk2) / np.linalg.norm(current_Xk1 - current_Xk2))
+
+    T_relative_scale = np.median(ratios)
+
+    print('Relative Scale for Translation : ', T_relative_scale)
+
+    if (_prev_current_Translation_Mat[2] > _prev_current_Translation_Mat[0]) and (_prev_current_Translation_Mat[2] > _prev_current_Translation_Mat[1]):
+        _pose_T = _pose_T + T_relative_scale * _pose_R.dot(_prev_current_Translation_Mat)
+        _pose_R = _prev_current_Rotation_Mat.dot(_pose_R)
+
+    print('[INFO] Pose Estimation Results')
+    print(_pose_T)
+
+    return _pose_T, _pose_R
 
 while True:
 
@@ -341,250 +392,18 @@ while True:
     img_buffer_feature_extraction(image_buffer, img_features_buffer, orb)
 
     common_features, geometric_unit_changes = img_buffer_feature_matching(img_features_buffer, BF_Matcher)
-    '''
-    full_view = np.hstack((image_buffer[0], image_buffer[1], image_buffer[2]))
+
+    pprev_prev_cloud, prev_current_cloud = img_common3Dcloud_triangulate(common_features, geometric_unit_changes)
+
+    pose_T, pose_R = pose_estimate(pose_T, pose_R, geometric_unit_changes['T_prev_current'], geometric_unit_changes['R_prev_current'], pprev_prev_cloud, prev_current_cloud)
     
-    cv.imshow('Images in the buffer [pprev, prev, current]', full_view)
-    
-    k = cv.waitKey(30) & 0xff
-    if k == 27:
-        break
-    '''
-'''
-def processFirstFrame(pprev_image, feature_extractor):
-
-    print('[1st Image Frame Process]')
-
-    pprev_keypoints = feature_extractor.detect(pprev_image, None)
-    pprev_keypoints, pprev_descriptors = feature_extractor.compute(pprev_image, pprev_keypoints)
-
-    print('[INFO] pprev Image ORB Extraction Results - Feature Num : ', len(pprev_keypoints))
-
-    return pprev_keypoints, pprev_descriptors
-
-def processSecondFrame(pprev_image, prev_image, pprev_keypoints, pprev_descriptors, feature_extractor, feature_matcher):
-
-    print('[2nd Image Frame Process]')
-
-    prev_keypoints = feature_extractor.detect(prev_image)
-    prev_keypoints, prev_descriptors = feature_extractor.compute(prev_image, prev_keypoints)
-
-    print('[INFO] prev Image ORB Extraction Results - Feature Num : ', len(prev_keypoints))
-
-    prev_feature_matches = feature_matcher.match(pprev_descriptors, prev_descriptors)
-    prev_feature_matches = sorted(prev_feature_matches, key=lambda x:x.distance)
-
-    print('[INFO] pprev-prev ORB Feature Match Num : ', len(prev_feature_matches))
-
-    # Compile the keypoints and descriptors from feature matching results
-    pprev_track_pts = []
-    prev_track_pts = []
-
-    pprev_track_des = []
-    prev_track_des = []
-
-    for m in prev_feature_matches:
-        pprev_track_pts.append(pprev_keypoints[m.queryIdx].pt)
-        prev_track_pts.append(prev_keypoints[m.trainIdx].pt)
-
-        pprev_track_des.append(pprev_descriptors[m.queryIdx])
-        prev_track_des.append(prev_descriptors[m.trainIdx])
-
-    pprev_track_pts_int = np.int32(pprev_track_pts)
-    prev_track_pts_int = np.int32(prev_track_pts)
-
-    # Compute Essential Matrix between pprev image and prev image 
-    # in order to acquire the translation and rotation between t-2 and t-1 images
-    Essential_Mat, mask = cv.findEssentialMat(pprev_track_pts_int, prev_track_pts_int, 
-                                              focal=focal_length, pp=(cx, cy),
-                                              method=cv.FM_RANSAC, prob=0.999, threshold=1.0)
-
-    print('[INFO] pprev-prev Essential Matrix')
-    print(Essential_Mat)
-
-    retval, Rotation_Mat, Translation_Mat, mask = cv.recoverPose(Essential_Mat, pprev_track_pts_int, prev_track_pts_int, 
-                                                                 focal=focal_length, pp=(cx, cy))
-
-    print('[INFO] pprev-prev Translation Matrix (Unscaled)')
-    print(Translation_Mat)
-
-    print('[INFO] pprev-prev Rotation Matrix')
-    print(Rotation_Mat)
-    
-    extrinsic_CAM_Mat = np.hstack((Rotation_Mat, Translation_Mat))
-
-    pprev_track_pts_tri = np.float32(pprev_track_pts).reshape(2, -1)
-    prev_track_pts_tri = np.float32(prev_track_pts).reshape(2, -1)
-
-    # The canonical matrix (set as the origin)
-    P0 = np.array([[1, 0, 0, 0],
-                  [0, 1, 0, 0],
-                  [0, 0, 1, 0]])
-    P0 = intrinsic_CAM_Mat.dot(P0)
-    # Rotated and translated using P0 as the reference point
-    P1 = np.hstack((Rotation_Mat, Translation_Mat))
-    P1 = intrinsic_CAM_Mat.dot(P1)
-
-    # Use 2D -> 3D Triangulation in order to acquire 3D point cloud image between pprev image and prev image
-    prev_cloud = cv.triangulatePoints(P0, P1, pprev_track_pts_tri, prev_track_pts_tri).reshape(-1, 4)[:, :3]
-
-    return pprev_track_pts, pprev_track_des, prev_track_pts, prev_track_des, prev_cloud, Translation_Mat, Rotation_Mat
-
-def processThirdFrame(prev_image, current_image, prev_keypoints, prev_descriptors, feature_extractor, feature_matcher):
-
-    print('[3rd Image Frame Process]')
-
-    current_keypoints = feature_extractor.detect(current_image)
-    current_keypoints, current_descriptors = feature_extractor.compute(current_image, current_keypoints)
-
-    print('[INFO] current Image ORB Extraction Results - Feature Num : ', len(current_keypoints))
-
-    current_feature_matches = feature_matcher.match(cv.UMat(np.array(prev_descriptors, dtype=np.uint8)), current_descriptors)
-    current_feature_matches = sorted(current_feature_matches, key=lambda x:x.distance)
-
-    print('[INFO] prev-current ORB Feature Match Num : ', len(current_feature_matches))
-
-    # Compile the keypoints and descriptors from feature matching results
-    prev_track_pts = []
-    current_track_pts = []
-
-    prev_track_des = []
-    current_track_des = []
-
-    for m in current_feature_matches:
-        prev_track_pts.append(prev_keypoints[m.queryIdx])
-        current_track_pts.append(current_keypoints[m.trainIdx].pt)
-
-        prev_track_des.append(prev_descriptors[m.queryIdx])
-        current_track_des.append(current_descriptors[m.trainIdx])
-
-    prev_track_pts_int = np.int32(prev_track_pts)
-    current_track_pts_int = np.int32(current_track_pts)
-
-    # Compute Essential Matrix between pprev image and prev image 
-    # in order to acquire the translation and rotation between t-2 and t-1 images
-    Essential_Mat, mask = cv.findEssentialMat(prev_track_pts_int, current_track_pts_int, 
-                                              focal=focal_length, pp=(cx, cy),
-                                              method=cv.FM_RANSAC, prob=0.999, threshold=1.0)
-
-    print('[INFO] prev-current Essential Matrix')
-    print(Essential_Mat)
-
-    retval, Rotation_Mat, Translation_Mat, mask = cv.recoverPose(Essential_Mat, prev_track_pts_int, current_track_pts_int, 
-                                                                 focal=focal_length, pp=(cx, cy))
-
-    print('[INFO] prev-current Translation Matrix (Unscaled)')
-    print(Translation_Mat)
-
-    print('[INFO] prev-current Rotation Matrix')
-    print(Rotation_Mat)
-    
-    extrinsic_CAM_Mat = np.hstack((Rotation_Mat, Translation_Mat))
-
-    prev_track_pts_tri = np.float32(prev_track_pts).reshape(2, -1)
-    current_track_pts_tri = np.float32(current_track_pts).reshape(2, -1)
-
-    # The canonical matrix (set as the origin)
-    P0 = np.array([[1, 0, 0, 0],
-                  [0, 1, 0, 0],
-                  [0, 0, 1, 0]])
-    P0 = intrinsic_CAM_Mat.dot(P0)
-    # Rotated and translated using P0 as the reference point
-    P1 = np.hstack((Rotation_Mat, Translation_Mat))
-    P1 = intrinsic_CAM_Mat.dot(P1)
-
-    # Use 2D -> 3D Triangulation in order to acquire 3D point cloud image between prev image and current image
-    current_cloud = cv.triangulatePoints(P0, P1, prev_track_pts_tri, current_track_pts_tri).reshape(-1, 4)[:, :3]
-    
-    return prev_track_pts, prev_track_des, current_track_pts, current_track_des, current_cloud, Translation_Mat, Rotation_Mat
-
-def pose_estimate(pose_T, pose_R, current_Translate_Mat, current_Rotate_Mat, prev_3D_cloud, current_3D_cloud):
-
-    print('[Pose estimation using Relative Scale along 3 consecutive images]')
-
-    # Relative scale computation using the distance between 3-D points of tracking features
-    print('prev_cloud shape : ', prev_3D_cloud.shape)
-    print('current_cloud shape : ', current_3D_cloud.shape)
-
-    # Between two 3-D points of tracking features from t image, t-1 image, t-2 image, 
-    # select the common 3-D points
-    common_cloud_num = min([prev_3D_cloud.shape[0], current_3D_cloud.shape[0]])
-    print('Number of common 3-D features points : ', common_cloud_num)
-
-    # Process common 3-D points for relative scaling
-    ratios = []
-    for i in range(common_cloud_num):
-        if i > 0:   # Pick a pair of common 3-D points and use them to calculate the depth (disparsity)
-            
-            # A pair of common 3-D points from current clouds
-            current_Xk1 = current_3D_cloud[i]
-            current_Xk2 = current_3D_cloud[i-1]
-
-            # A pair of common 3-D points from previous clouds
-            prev_Xk1 = prev_3D_cloud[i]
-            prev_Xk2 = prev_3D_cloud[i-1]
-
-            # Use np.linalg.norm to acquire L2 norm between a pair of common 3-D points, which serves as the distance between the pair
-            if np.linalg.norm(current_Xk1 - current_Xk2 != 0):
-                ratios.append(np.linalg.norm(prev_Xk1 - prev_Xk2) / np.linalg.norm(current_Xk1 - current_Xk2))
-
-    T_relative_scale = np.median(ratios)    # Use median value as the final relative scale result
-
-    print('Relative Scale for Translation : ', T_relative_scale)
-    
-    # Consider dominant forward motion
-    # This is because when the vehicle is standing still, there should not be changes in feature coordinates.
-    # As a result, when standing still, transformation has to be zero. Therefore, consider forward translation as dominant component in camera pose.
-    if(current_Translate_Mat[2] > current_Translate_Mat[0]) and (current_Translate_Mat[2] > current_Translate_Mat[1]):
-        pose_T = pose_T + T_relative_scale * pose_R.dot(current_Translate_Mat)
-        pose_R = current_Rotate_Mat.dot(pose_R)
-
-    print('[INFO] Pose Estimation Results')
-    print(pose_T)
-
-    return pose_T, pose_R
-
-init_flag = True
-plot_background = np.ones((300, 300))
-
-plt.grid()
-
-while True:
-
-    load_realsense_frames(image_buffer, realsense_pipeline)
-
-    pprev_keypoints, pprev_descriptors = processFirstFrame(image_buffer[0], orb)
-
-    pprev_track_pts, pprev_track_des, prev_track_pts, prev_track_des, prev_cloud, prev_Translation_Mat, prev_Rotation_Mat = processSecondFrame(image_buffer[0], image_buffer[1], pprev_keypoints, pprev_descriptors, orb, BF_Matcher)
-
-    if init_flag is True:
-
-        print('--- Init Pose ---')
-        pose_T = prev_Translation_Mat
-        pose_R = prev_Rotation_Mat
-
-        init_flag = False
-
-    prev_track_pts, prev_track_des, current_track_pts, current_track_des, current_cloud, current_Translation_Mat, current_Rotation_Mat = processThirdFrame(image_buffer[1], image_buffer[2], prev_track_pts, prev_track_des, orb, BF_Matcher)
-
-    pose_T, pose_R = pose_estimate(pose_T, pose_R, current_Translation_Mat, current_Rotation_Mat, prev_cloud, current_cloud)
-
     # Draw the trajectory 
     plt.xlim(-30.0, 30.0)
     plt.ylim(-30.0, 30.0)
     plt.scatter(pose_T[0][0], pose_T[2][0])
 
-    plt.draw()
+    #plt.draw()
+    plt.pause(0.0001)
     plt.show(block=False)
-    plt.pause(0.01)
-    
-    full_view = np.hstack((image_buffer[0], image_buffer[1], image_buffer[2]))
-    
-    cv.imshow('Images in the buffer [pprev, prev, current]', full_view)
-    
-    k = cv.waitKey(30) & 0xff
-    if k == 27:
-        break
-
-    print('-----------------------------------------------------')
-'''
+       
+    print('----------------------------------------------------------------')
