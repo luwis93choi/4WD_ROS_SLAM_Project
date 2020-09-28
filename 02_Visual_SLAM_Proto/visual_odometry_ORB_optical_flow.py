@@ -376,7 +376,7 @@ def pose_estimate(_pose_T, _pose_R, _prev_current_Translation_Mat, _prev_current
 
     print('Relative Scale for Translation : ', T_relative_scale)
 
-    if (_prev_current_Translation_Mat[2] > _prev_current_Translation_Mat[0]) and (_prev_current_Translation_Mat[2] > _prev_current_Translation_Mat[1]):
+    if (abs(_prev_current_Translation_Mat[2]) > abs(_prev_current_Translation_Mat[0])) and (abs(_prev_current_Translation_Mat[2]) > abs(_prev_current_Translation_Mat[1])):
         _pose_T = _pose_T + T_relative_scale * _pose_R.dot(_prev_current_Translation_Mat)
         _pose_R = _prev_current_Rotation_Mat.dot(_pose_R)
 
@@ -403,7 +403,7 @@ while True:
     plt.scatter(pose_T[0][0], pose_T[2][0])
 
     #plt.draw()
-    plt.pause(0.0001)
+    plt.pause(0.000001)
     plt.show(block=False)
        
     print('----------------------------------------------------------------')
