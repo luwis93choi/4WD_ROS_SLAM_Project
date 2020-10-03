@@ -328,6 +328,10 @@ def pose_estimate(_pose_T, _pose_R, _prev_current_Translation_Mat, _prev_current
 
     print('Relative Scale for Translation : ', T_relative_scale)
 
+    # Apply Forward Dominant Motoin Model with Absolute Value Comparison. 
+    # This is implemented to prevent the error of accumulating Translation and Rotation when the camera is stationary, but the image is changing.
+    # This condition is used to prevent nearby moving object's feature keypoint changes from affecting the calculation of translation and rotation.
+    # Absolute value of Z is compared to absolute value of Y and X. Absolute value is used to make this condition work under both foward and backward movements of the camera.
     if (abs(_prev_current_Translation_Mat[2]) > abs(_prev_current_Translation_Mat[0])) and (abs(_prev_current_Translation_Mat[2]) > abs(_prev_current_Translation_Mat[1])):
         _pose_T = _pose_T + T_relative_scale * _pose_R.dot(_prev_current_Translation_Mat)
         _pose_R = _prev_current_Rotation_Mat.dot(_pose_R)
@@ -337,7 +341,23 @@ def pose_estimate(_pose_T, _pose_R, _prev_current_Translation_Mat, _prev_current
 
     return _pose_T, _pose_R
 
-def show_image_match(_image_buffer, _common_feature_buffer):
+def frame_Skip(_common_feature_buffer):
+
+    pprev_match_keypoints_pts = np.float32(_common_feature_buffer[0]['keypoints_pts'])
+    prev_match_keypoints_pts = np.float32(_common_feature_buffer[1]['keypoints_pts'])
+    current_match_keypoints_pts = np.float32(_common_feature_buffer[2]['keypoints_pts'])
+
+    pixel_diff = np.mean(abs(current_match_keypoints_pts - prev_match_keypoints_pts))
+
+    print('[Pixel DIFF] : ',  pixel_diff)
+
+    return pixel_diff < 3
+
+def optimize_bundle_adjustment():
+
+    print()
+
+def show_image_match_trajectory(_image_buffer, _common_feature_buffer):
 
     ### Setup match result image with the common features over 3 consecutive images #########
     img_pprev = image_buffer[0].copy()
@@ -378,12 +398,27 @@ while True:
 
     common_features = img_buffer_feature_matching(img_features_buffer, BF_Matcher)
 
-    geometric_unit_changes = geometric_change_calc(common_features)
+    if(frame_Skip(common_features) == False):
 
-    pprev_prev_cloud, prev_current_cloud = img_common3Dcloud_triangulate(common_features, geometric_unit_changes)
+        # If there are enough common feature keypoints, compute geometric changes over 3 images and estimate camera pose.
+        if(len(common_features[0]['keypoints']) >= 8):
 
-    pose_T, pose_R = pose_estimate(pose_T, pose_R, geometric_unit_changes['T_prev_current'], geometric_unit_changes['R_prev_current'], pprev_prev_cloud, prev_current_cloud)
-    
+            geometric_unit_changes = geometric_change_calc(common_features)
+
+            pprev_prev_cloud, prev_current_cloud = img_common3Dcloud_triangulate(common_features, geometric_unit_changes)
+
+            pose_T, pose_R = pose_estimate(pose_T, pose_R, geometric_unit_changes['T_prev_current'], geometric_unit_changes['R_prev_current'], pprev_prev_cloud, prev_current_cloud)
+            
+        # If there are not enough commone keypoints for Essential Matrix Decomposition, skip the current frame and load a new image.
+        else:
+
+            print('-------FRAME SKIPPED : Not Enough Feature Keypoints-------')
+
+    else:
+
+            print('-------FRAME SKIPPED : Camera is stationary / No need to accumulate pose data-------')
+
+
     # Draw the trajectory 
     plt.xlim(-30.0, 30.0)
     plt.ylim(-30.0, 30.0)
@@ -392,5 +427,5 @@ while True:
     #plt.draw()
     plt.pause(0.000001)
     plt.show(block=False)
-       
+    
     print('----------------------------------------------------------------')
