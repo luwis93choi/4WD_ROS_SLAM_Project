@@ -147,9 +147,6 @@ def img_buffer_feature_matching(_image_feature_buffer, _feature_matcher):
     common_feature_buffer = [{'keypoints' : None, 'keypoints_pts' : None}, 
                              {'keypoints' : None, 'keypoints_pts' : None}, 
                              {'keypoints' : None, 'keypoints_pts' : None}]
- 
-    geometric_unit_changes = {'R_pprev_prev' : None, 'T_pprev_prev' : None, 
-                              'R_prev_current' : None, 'T_prev_current' : None}
 
     ### Filtering common feature keypoints by comparing the descriptors from 3 consecutive images ###
     pprev_feature_idx = []
@@ -218,6 +215,22 @@ def img_buffer_feature_matching(_image_feature_buffer, _feature_matcher):
     print('prev_match_keypoints : ', len(prev_match_keypoints))
     print('pprev_match_keypoints : ', len(pprev_match_keypoints))
 
+    return common_feature_buffer
+
+def geometric_change_calc(_common_feature_buffer):
+ 
+    geometric_unit_changes = {'R_pprev_prev' : None, 'T_pprev_prev' : None, 
+                              'R_prev_current' : None, 'T_prev_current' : None}
+
+    pprev_match_keypoints = _common_feature_buffer[0]['keypoints']
+    pprev_match_keypoints_pts = _common_feature_buffer[0]['keypoints_pts']
+
+    prev_match_keypoints = _common_feature_buffer[1]['keypoints']
+    prev_match_keypoints_pts = _common_feature_buffer[1]['keypoints_pts']
+
+    current_match_keypoints = _common_feature_buffer[2]['keypoints']
+    current_match_keypoints_pts = _common_feature_buffer[2]['keypoints_pts']
+
     ### Essential Matrix Calcuation & Rotation/Translation Matrix Calculation ###
     Essential_Mat_pprev_prev, mask_pprev_prev = cv.findEssentialMat(np.int32(prev_match_keypoints_pts), 
                                                                     np.int32(pprev_match_keypoints_pts),
@@ -253,68 +266,7 @@ def img_buffer_feature_matching(_image_feature_buffer, _feature_matcher):
     print('[T_prev_current]')
     print(Translation_Mat_prev_current)
 
-    ### [Not Used] Common Feature Selection Optimization : Choose the common viable features without pixel coordinate jumps ###
-    pprev_prev_feature_pixel_distance = []
-    prev_current_feature_pixel_distance = []
-    
-    for i in range(len(pprev_prev_current_feature_matches)):
-        pprev_prev_feature_pixel_distance.append(np.linalg.norm(np.array(pprev_match_keypoints[i].pt) - np.array(prev_match_keypoints[i].pt)))
-        prev_current_feature_pixel_distance.append(np.linalg.norm(np.array(prev_match_keypoints[i].pt) - np.array(current_match_keypoints[i].pt)))
-
-    #print('pprev_prev_feature_pixel_distance : ', pprev_prev_feature_pixel_distance)
-    #print('prev_current_feature_pixel_distance : ', prev_current_feature_pixel_distance)
-
-    pprev_prev_mean = np.mean(pprev_prev_feature_pixel_distance)
-    prev_current_mean = np.mean(prev_current_feature_pixel_distance)
-
-    ### Setup match result image with the common features over 3 consecutive images #########
-    img_pprev = image_buffer[0].copy()
-    img_prev = image_buffer[1].copy()
-    img_curr = image_buffer[2].copy()
-    
-    for i in range(len(pprev_match_keypoints)):
-
-        color_val = np.random.randint(256, size=3)
-        img_pprev = cv.circle(img_pprev, tuple(np.int32(pprev_match_keypoints[i].pt)), 3, (int(color_val[0]), int(color_val[1]), int(color_val[2])), -1)
-        img_prev = cv.circle(img_prev, tuple(np.int32(prev_match_keypoints[i].pt)), 3, (int(color_val[0]), int(color_val[1]), int(color_val[2])), -1)
-        img_curr = cv.circle(img_curr, tuple(np.int32(current_match_keypoints[i].pt)), 3, (int(color_val[0]), int(color_val[1]), int(color_val[2])), -1)
-
-    full_view = np.hstack((img_pprev, img_prev, img_curr))
-    
-    for i in range(len(pprev_match_keypoints)):
-
-        full_view = cv.line(full_view, tuple([np.int32(pprev_match_keypoints[i].pt)[0], np.int32(pprev_match_keypoints[i].pt)[1]]), 
-                                       tuple([np.int32(prev_match_keypoints[i].pt)[0] + 640, np.int32(prev_match_keypoints[i].pt)[1]]), (0, 0, 255), 1)
-        full_view = cv.line(full_view, tuple([np.int32(prev_match_keypoints[i].pt)[0] + 640, np.int32(prev_match_keypoints[i].pt)[1]]), 
-                                       tuple([np.int32(current_match_keypoints[i].pt)[0] + 640*2, np.int32(current_match_keypoints[i].pt)[1]]), (0, 0, 255), 1)
-
-    '''
-    ### Draw match result image with feature pixel distance distribution histogram #####
-    grid = plt.GridSpec(nrows=2, ncols=2)
-    
-    graph_1 = plt.subplot(grid[0, 0])
-    graph_1.hist(pprev_prev_feature_pixel_distance)
-    graph_1.title.set_text('Feature Pixel Distance Distribution (pprev - prev)')
-    graph_1.set_xlim(0, 800)
-    graph_1.axvline(pprev_prev_mean, color='black', linestyle='dashed', linewidth=1)
-    
-    graph_2 = plt.subplot(grid[0, 1])
-    graph_2.hist(prev_current_feature_pixel_distance)
-    graph_2.title.set_text('Feature Pixel Distance Distribution (prev - current)')
-    graph_2.set_xlim(0, 800)
-    graph_2.axvline(prev_current_mean, color='black', linestyle='dashed', linewidth=1)
-    
-    graph_3 = plt.subplot(grid[1,0:])
-    graph_3.imshow(full_view)
-    graph_3.title.set_text('Feature Matching Results over 3 Consecutive Images')
-    
-    #plt.show()
-
-    plt.draw()
-    plt.show(block=False)
-    plt.pause(0.001)
-    '''
-    return common_feature_buffer, geometric_unit_changes
+    return geometric_unit_changes
 
 def img_common3Dcloud_triangulate(_common_feature_buffer, _geometric_unit_changes):
 
@@ -385,13 +337,48 @@ def pose_estimate(_pose_T, _pose_R, _prev_current_Translation_Mat, _prev_current
 
     return _pose_T, _pose_R
 
+def show_image_match(_image_buffer, _common_feature_buffer):
+
+    ### Setup match result image with the common features over 3 consecutive images #########
+    img_pprev = image_buffer[0].copy()
+    img_prev = image_buffer[1].copy()
+    img_curr = image_buffer[2].copy()
+    
+    pprev_match_keypoints = _common_feature_buffer[0]['keypoints']
+    pprev_match_keypoints_pts = _common_feature_buffer[0]['keypoints_pts']
+
+    prev_match_keypoints = _common_feature_buffer[1]['keypoints']
+    prev_match_keypoints_pts = _common_feature_buffer[1]['keypoints_pts']
+
+    current_match_keypoints = _common_feature_buffer[2]['keypoints']
+    current_match_keypoints_pts = _common_feature_buffer[2]['keypoints_pts']
+
+    for i in range(len(pprev_match_keypoints)):
+
+        color_val = np.random.randint(256, size=3)
+        img_pprev = cv.circle(img_pprev, tuple(np.int32(pprev_match_keypoints[i].pt)), 3, (int(color_val[0]), int(color_val[1]), int(color_val[2])), -1)
+        img_prev = cv.circle(img_prev, tuple(np.int32(prev_match_keypoints[i].pt)), 3, (int(color_val[0]), int(color_val[1]), int(color_val[2])), -1)
+        img_curr = cv.circle(img_curr, tuple(np.int32(current_match_keypoints[i].pt)), 3, (int(color_val[0]), int(color_val[1]), int(color_val[2])), -1)
+
+    full_view = np.hstack((img_pprev, img_prev, img_curr))
+    
+    for i in range(len(pprev_match_keypoints)):
+
+        full_view = cv.line(full_view, tuple([np.int32(pprev_match_keypoints[i].pt)[0], np.int32(pprev_match_keypoints[i].pt)[1]]), 
+                                       tuple([np.int32(prev_match_keypoints[i].pt)[0] + 640, np.int32(prev_match_keypoints[i].pt)[1]]), (0, 0, 255), 1)
+        full_view = cv.line(full_view, tuple([np.int32(prev_match_keypoints[i].pt)[0] + 640, np.int32(prev_match_keypoints[i].pt)[1]]), 
+                                       tuple([np.int32(current_match_keypoints[i].pt)[0] + 640*2, np.int32(current_match_keypoints[i].pt)[1]]), (0, 0, 255), 1)
+
+
 while True:
 
     load_realsense_frames(image_buffer, realsense_pipeline)
 
     img_buffer_feature_extraction(image_buffer, img_features_buffer, orb)
 
-    common_features, geometric_unit_changes = img_buffer_feature_matching(img_features_buffer, BF_Matcher)
+    common_features = img_buffer_feature_matching(img_features_buffer, BF_Matcher)
+
+    geometric_unit_changes = geometric_change_calc(common_features)
 
     pprev_prev_cloud, prev_current_cloud = img_common3Dcloud_triangulate(common_features, geometric_unit_changes)
 
