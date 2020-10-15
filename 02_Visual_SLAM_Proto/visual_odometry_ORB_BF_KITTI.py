@@ -420,14 +420,14 @@ class mono_visual_odom:
         BA_optimizer.add_pose(0, g2o.Quaternion(prev_pose_R), prev_pose_T.ravel(), self.fx, self.fy, self.cx, self.cy, baseline)
         BA_optimizer.add_pose(1, g2o.Quaternion(current_est_R), current_est_T.ravel(), self.fx, self.fy, self.cx, self.cy, baseline)
         
-        for i in range(math.floor(len(prev_current_cloud)/4)):
+        for i in range(math.floor(len(prev_current_cloud)/5)):
             landmark_point = prev_current_cloud[i]
             landmark_point[0] = landmark_point[0] + prev_pose_T[0][0]
             landmark_point[1] = landmark_point[1] + prev_pose_T[1][0]
             landmark_point[2] = landmark_point[2] + prev_pose_T[2][0]
             BA_optimizer.add_point(i+2, landmark_point)
         
-        for i in range(math.floor(len(common_current_keypoints)/4)):
+        for i in range(math.floor(len(common_current_keypoints)/5)):
             BA_optimizer.add_edge(point_id=i+2, pose_id=0, measurement=common_prev_keypoints[i].pt)
             BA_optimizer.add_edge(point_id=i+2, pose_id=1, measurement=common_current_keypoints[i].pt)
 

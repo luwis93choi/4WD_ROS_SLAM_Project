@@ -13,7 +13,7 @@ while True:
     #pose_T = VO_KITTI.calc_trajectory()
 
     # Draw the trajectory 
-    plt.title('KITTI Dataset - Monocular Visual Odometry (Relative Translation Scaling)\n\n[g2o Local Bundle Adjustment proto]\n[Levenberg Masquardt Solver / 2 poses with multiple common 3D point clouds]')
+    plt.title('KITTI Dataset - Monocular Visual Odometry (Relative Translation Scaling)\n\n[g2o Local Bundle Adjustment proto]\n[Levenberg Masquardt Solver / 3 poses with multiple common 3D point clouds]')
     #plt.scatter(pose_T[0][0], pose_T[2][0], c='red')
     plt.plot(pose_T[0][0], pose_T[2][0], 'ro')
 
