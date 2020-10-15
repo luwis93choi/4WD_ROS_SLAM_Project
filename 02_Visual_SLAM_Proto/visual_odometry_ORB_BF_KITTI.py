@@ -17,6 +17,8 @@ from time import sleep
 
 import csv
 
+import math
+
 class mono_visual_odom:
 
     def __init__(self, _focal_length, _fx, _fy, _cx, _cy, _dataset_path, _dataset_pose_path):
@@ -37,9 +39,9 @@ class mono_visual_odom:
         self.cx = _cx
         self.cy = _cy
 
-        self.intrinsic_CAM_Mat = np.array([[self.fx, 0, self.cx],
-                                           [0, self.fy, self.cy],
-                                           [0, 0, 1]])
+        self.intrinsic_CAM_Mat = np.array([[self.fx, 0,       self.cx],
+                                           [0,       self.fy, self.cy],
+                                           [0,       0,       1      ]])
 
         print('focal length : ', self.focal_length)
         print('fx : ', self.fx)
@@ -62,6 +64,17 @@ class mono_visual_odom:
         self.pose_R = np.array([[1, 0, 0],
                                 [0, 1, 0],
                                 [0, 0, 1]])
+                
+        self.prev_pose_T = np.array([[0],
+                                     [0],
+                                     [0]])
+
+        self.prev_pose_R = np.array([[1, 0, 0],
+                                     [0, 1, 0],
+                                     [0, 0, 1]])
+                
+        self.pprev_prev_cloud = None
+        self.prev_current_cloud = None
 
         self.dataset_path = _dataset_path
         self.images = sorted(os.listdir(_dataset_path))
@@ -169,8 +182,8 @@ class mono_visual_odom:
     def img_buffer_feature_matching(self, _image_feature_buffer, _feature_matcher):
 
         common_feature_buffer = [{'keypoints' : None, 'keypoints_pts' : None}, 
-                                {'keypoints' : None, 'keypoints_pts' : None}, 
-                                {'keypoints' : None, 'keypoints_pts' : None}]
+                                 {'keypoints' : None, 'keypoints_pts' : None}, 
+                                 {'keypoints' : None, 'keypoints_pts' : None}]
 
         ### Filtering common feature keypoints by comparing the descriptors from 3 consecutive images ###
         pprev_feature_idx = []
@@ -307,8 +320,8 @@ class mono_visual_odom:
         ### Triangluation between pprev and prev
         # The canonical matrix (set as the origin)
         P0 = np.array([[1, 0, 0, 0],
-                    [0, 1, 0, 0],
-                    [0, 0, 1, 0]])
+                       [0, 1, 0, 0],
+                       [0, 0, 1, 0]])
         P0 = self.intrinsic_CAM_Mat.dot(P0)
         # Rotated and translated using P0 as the reference point
         P1 = np.hstack((Rotation_Mat_pprev_prev, Translation_Mat_pprev_prev))
@@ -320,8 +333,8 @@ class mono_visual_odom:
         ### Triangluation between prev and current
         # The canonical matrix (set as the origin)
         P0 = np.array([[1, 0, 0, 0],
-                    [0, 1, 0, 0],
-                    [0, 0, 1, 0]])
+                       [0, 1, 0, 0],
+                       [0, 0, 1, 0]])
         P0 = self.intrinsic_CAM_Mat.dot(P0)
         # Rotated and translated using P0 as the reference point
         P1 = np.hstack((Rotation_Mat_prev_current, Translation_Mat_prev_current))
@@ -329,17 +342,18 @@ class mono_visual_odom:
 
         prev_current_cloud = cv.triangulatePoints(P0, P1, prev_match_keypoints_pts, current_match_keypoints_pts).reshape(-1, 4)[:, :3]
 
-        '''
-        # Remove the triangulation results with negative Z value (Remove the triangulation values that are projected behind image plane)
-        corrected_pprev_prev_cloud = []
-        corrected_prev_current_cloud = []
-        for i in range(len(pprev_prev_cloud)):
-            if (pprev_prev_cloud[i][2] >= 0) and (prev_current_cloud[i][2] >= 0):
-                corrected_pprev_prev_cloud.append(pprev_prev_cloud[i])
-                corrected_prev_current_cloud.append(prev_current_cloud[i])
-
-        return corrected_pprev_prev_cloud, corrected_prev_current_cloud
-        '''
+        
+        # Remove the triangulation results with negative Z value 
+        # (Remove the triangulation values that are projected behind image plane)
+        #corrected_pprev_prev_cloud = []
+        #corrected_prev_current_cloud = []
+        #for i in range(len(pprev_prev_cloud)):
+        #    if (pprev_prev_cloud[i][2] >= 0) and (prev_current_cloud[i][2] >= 0):
+        #        corrected_pprev_prev_cloud.append(pprev_prev_cloud[i])
+        #        corrected_prev_current_cloud.append(prev_current_cloud[i])
+        #
+        #return corrected_pprev_prev_cloud, corrected_prev_current_cloud
+        
         return pprev_prev_cloud, prev_current_cloud
 
     def pose_estimate(self, _pose_T, _pose_R, _prev_current_Translation_Mat, _prev_current_Rotation_Mat, _pprev_prev_cloud, _prev_current_cloud):
@@ -371,11 +385,16 @@ class mono_visual_odom:
             _pose_T = _pose_T + T_relative_scale * _pose_R.dot(_prev_current_Translation_Mat)
             _pose_R = _prev_current_Rotation_Mat.dot(_pose_R)
 
-        print('[INFO] Pose Estimation Results')
-        print(_pose_T)
-        print(_pose_R)
+            print('[INFO] Dominant Forward : Pose Estimation Results')
+            print(_pose_T)
+            print(_pose_R)
 
-        return _pose_T, _pose_R
+            return _pose_T, _pose_R
+
+        else:
+            
+            print('[INFO] Using prev Pose Estimation')
+            return self.prev_pose_T, self.prev_pose_R
 
     def frame_Skip(self, _common_feature_buffer):
 
@@ -401,26 +420,26 @@ class mono_visual_odom:
         BA_optimizer.add_pose(0, g2o.Quaternion(prev_pose_R), prev_pose_T.ravel(), self.fx, self.fy, self.cx, self.cy, baseline)
         BA_optimizer.add_pose(1, g2o.Quaternion(current_est_R), current_est_T.ravel(), self.fx, self.fy, self.cx, self.cy, baseline)
         
-        for i in range(len(prev_current_cloud)):
+        for i in range(math.floor(len(prev_current_cloud)/4)):
             landmark_point = prev_current_cloud[i]
             landmark_point[0] = landmark_point[0] + prev_pose_T[0][0]
             landmark_point[1] = landmark_point[1] + prev_pose_T[1][0]
             landmark_point[2] = landmark_point[2] + prev_pose_T[2][0]
             BA_optimizer.add_point(i+2, landmark_point)
         
-        for i in range(len(common_current_keypoints)):
+        for i in range(math.floor(len(common_current_keypoints)/4)):
             BA_optimizer.add_edge(point_id=i+2, pose_id=0, measurement=common_prev_keypoints[i].pt)
             BA_optimizer.add_edge(point_id=i+2, pose_id=1, measurement=common_current_keypoints[i].pt)
 
-        BA_optimizer.optimize(max_iteration=1)
+        BA_optimizer.optimize(max_iteration=20)
 
-        #print(dir(BA_optimizer.get_point(1).orientation()))
+        #print(dir(BA_optimizer.get_point(1)))
         #print(dir(BA_optimizer.get_pose(1).rotation()))
 
-        print(BA_optimizer.get_pose(1).translation().T)
+        #print(BA_optimizer.get_pose(1).position())
 
-        print(BA_optimizer.get_pose(1).rotation().R)
-        print(BA_optimizer.get_pose(1).orientation().R)
+        #print(BA_optimizer.get_pose(1).rotation().R)
+        #print(BA_optimizer.get_pose(1).orientation().R)
 
         return BA_optimizer.get_pose(1).translation().T, BA_optimizer.get_pose(1).rotation().R
 
@@ -443,14 +462,25 @@ class mono_visual_odom:
 
                     pprev_prev_cloud, prev_current_cloud = self.img_common3Dcloud_triangulate(common_features, geometric_unit_changes)
 
-                    prev_pose_T = self.pose_T
-                    prev_pose_R = self.pose_R
+                    ### pprev_prev point cloud position correction
+                    for i in range(len(pprev_prev_cloud)):
+                        pprev_prev_cloud[i][0] = pprev_prev_cloud[i][0] + self.prev_pose_T[0][0]
+                        pprev_prev_cloud[i][1] = pprev_prev_cloud[i][1] + self.prev_pose_T[1][0]
+                        pprev_prev_cloud[i][2] = pprev_prev_cloud[i][2] + self.prev_pose_T[2][0]
 
-                    self.pose_T, self.pose_R = self.pose_estimate(self.pose_T, self.pose_R, geometric_unit_changes['T_prev_current'], geometric_unit_changes['R_prev_current'], pprev_prev_cloud, prev_current_cloud)
+                    self.pprev_prev_cloud = pprev_prev_cloud
+                    self.prev_current_cloud = prev_current_cloud
+
+                    self.prev_pose_T = self.pose_T
+                    self.prev_pose_R = self.pose_R
+
+                    self.pose_T, self.pose_R = self.pose_estimate(self.pose_T, self.pose_R, 
+                                                                  geometric_unit_changes['T_prev_current'], geometric_unit_changes['R_prev_current'], 
+                                                                  self.pprev_prev_cloud, self.prev_current_cloud)
                     
-                    optimized_pose_T, optimized_pose_R = self.optimizePose_bundle_adjustment(prev_pose_T, prev_pose_R, 
+                    optimized_pose_T, optimized_pose_R = self.optimizePose_bundle_adjustment(self.prev_pose_T, self.prev_pose_R, 
                                                                                              self.pose_T, self.pose_R, 
-                                                                                             prev_current_cloud,
+                                                                                             self.prev_current_cloud,
                                                                                              common_features[1]['keypoints'], common_features[2]['keypoints'])
 
                     self.pose_T = np.array([[optimized_pose_T[0]],
@@ -474,10 +504,8 @@ class mono_visual_odom:
 
             print('----------------------------------------------------------------')
 
-            #return self.pose_T, self.pose_R, pprev_prev_cloud, prev_current_cloud
-            return self.pose_T
-
         else:
 
             print('End of Dataset')
-            return self.pose_T
+            
+        return self.pose_T, self.pprev_prev_cloud, self.prev_current_cloud
