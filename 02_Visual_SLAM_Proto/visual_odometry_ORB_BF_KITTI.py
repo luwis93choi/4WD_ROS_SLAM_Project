@@ -100,7 +100,7 @@ class mono_visual_odom:
             pose = line.strip().split()
 
             self.ground_truth_T.append([float(pose[3]), float(pose[7]), float(pose[11])])
-            '''
+            
             # Set up initial pprev_pose as 0th groundtruth
             if init_flag == 0:
                 init_flag = 1
@@ -122,7 +122,7 @@ class mono_visual_odom:
                 self.prev_pose_R = np.array([[float(pose[0]), float(pose[1]), float(pose[2])],
                                              [float(pose[4]), float(pose[5]), float(pose[6])],
                                              [float(pose[8]), float(pose[9]), float(pose[10])]])
-            '''
+            
         f.close()
 
         print('Dataset Path : ', self.dataset_path)
@@ -432,7 +432,42 @@ class mono_visual_odom:
 
         return pixel_diff < 3
     
-    def optimizePose_bundle_adjustment(self, prev_pose_T, prev_pose_R, current_est_T, current_est_R, prev_current_cloud, common_prev_keypoints, common_current_keypoints):
+    '''
+    Need to work on 3 camera pose BA
+    '''
+    def optimizePose_bundle_adjustment_3pose(self, pprev_pose_T, pprev_pose_R,
+                                                   prev_pose_T, prev_pose_R, 
+                                                   current_est_T, current_est_R, 
+                                                   pprev_prev_cloud, prev_current_cloud, 
+                                                   common_pprev_keypoints, common_prev_keypoints, common_current_keypoints):
+        # Local Bundle Optimization (Only between 3 camera poses)
+
+        # Bundle Adjustment Optimizer
+        BA_optimizer = BundleAdjustment()
+
+        baseline = np.linalg.norm(prev_pose_T - current_est_T)
+        #baseline = 0.0
+
+        BA_optimizer.add_pose(0, g2o.Quaternion(prev_pose_R), prev_pose_T.ravel(), self.fx, self.fy, self.cx, self.cy, baseline)
+        BA_optimizer.add_pose(1, g2o.Quaternion(current_est_R), current_est_T.ravel(), self.fx, self.fy, self.cx, self.cy, baseline)
+        
+        #for i in range(math.floor(len(prev_current_cloud)/5)):
+        for i in range(len(prev_current_cloud)):
+            BA_optimizer.add_point(i+2, prev_current_cloud[i])
+        
+        #for i in range(math.floor(len(common_current_keypoints)/5)):
+        for i in range(len(common_current_keypoints)):
+            BA_optimizer.add_edge(point_id=i+2, pose_id=0, measurement=common_prev_keypoints[i].pt)
+            BA_optimizer.add_edge(point_id=i+2, pose_id=1, measurement=common_current_keypoints[i].pt)
+
+        BA_optimizer.optimize(max_iteration=1)
+
+        return BA_optimizer.get_pose(1).translation().T, BA_optimizer.get_pose(1).rotation().R
+
+    def optimizePose_bundle_adjustment(self, prev_pose_T, prev_pose_R, 
+                                             current_est_T, current_est_R, 
+                                             prev_current_cloud, 
+                                             common_prev_keypoints, common_current_keypoints):
         # Local Bundle Optimization (Only between 2 camera poses)
 
         # Bundle Adjustment Optimizer
@@ -455,7 +490,8 @@ class mono_visual_odom:
 
         BA_optimizer.optimize(max_iteration=1)
 
-        #print(dir(BA_optimizer.get_point(1)))
+        for i in range(len(prev_current_cloud)):
+            prev_current_cloud[i] = BA_optimizer.get_point(i+2).T
 
         return BA_optimizer.get_pose(1).translation().T, BA_optimizer.get_pose(1).rotation().R
 
@@ -481,7 +517,12 @@ class mono_visual_odom:
                     self.pose_T, self.pose_R = self.pose_estimate(self.pose_T, self.pose_R, 
                                                                   geometric_unit_changes['T_prev_current'], geometric_unit_changes['R_prev_current'], 
                                                                   self.pprev_prev_cloud, self.prev_current_cloud)
-                    
+                     
+                    optimized_pose_T, optimized_pose_R = self.optimizePose_bundle_adjustment(self.prev_pose_T, self.prev_pose_R, 
+                                                                                             self.pose_T, self.pose_R, 
+                                                                                             self.prev_current_cloud,
+                                                                                             common_features[1]['keypoints'], common_features[2]['keypoints'])
+
                     ### pprev_prev point cloud position correction
                     for i in range(len(self.pprev_prev_cloud)):
                         self.pprev_prev_cloud[i][0] = self.pprev_prev_cloud[i][0] + self.prev_pose_T[0][0]
@@ -493,11 +534,6 @@ class mono_visual_odom:
                         self.prev_current_cloud[i][0] = self.prev_current_cloud[i][0] + self.pose_T[0][0]
                         self.prev_current_cloud[i][1] = self.prev_current_cloud[i][1] + self.pose_T[1][0]
                         self.prev_current_cloud[i][2] = self.prev_current_cloud[i][2] + self.pose_T[2][0]
-                        
-                    optimized_pose_T, optimized_pose_R = self.optimizePose_bundle_adjustment(self.prev_pose_T, self.prev_pose_R, 
-                                                                                             self.pose_T, self.pose_R, 
-                                                                                             self.prev_current_cloud,
-                                                                                             common_features[1]['keypoints'], common_features[2]['keypoints'])
 
                     self.pose_T = np.array([[optimized_pose_T[0]],
                                             [optimized_pose_T[1]],
@@ -530,4 +566,4 @@ class mono_visual_odom:
 
             print('End of Dataset')
             
-        return self.pose_T, self.pprev_prev_cloud[:10], self.prev_current_cloud[:10]
+        return self.pose_T, self.pprev_prev_cloud[:5], self.prev_current_cloud[:5]

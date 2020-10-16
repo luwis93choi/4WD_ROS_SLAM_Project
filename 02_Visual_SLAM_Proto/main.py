@@ -22,9 +22,9 @@ while True:
     plt.plot(VO_KITTI.ground_truth_T[VO_KITTI.dataset_current_idx-1][0], VO_KITTI.ground_truth_T[VO_KITTI.dataset_current_idx-1][2], 'bo')
 
     # Draw common cloud points
-    #for i in range(len(pprev_prev_cloud)):
-    #    plt.plot(pprev_prev_cloud[i][0], pprev_prev_cloud[i][2], color='orange', marker='*')
-    #    plt.plot(prev_current_cloud[i][0], prev_current_cloud[i][2], color='green', marker='*')
+    for i in range(len(pprev_prev_cloud)):
+        plt.plot(pprev_prev_cloud[i][0], pprev_prev_cloud[i][2], color='orange', marker='*')
+        plt.plot(prev_current_cloud[i][0], prev_current_cloud[i][2], color='green', marker='*')
 
     #plt.draw()
     plt.pause(0.000001)
