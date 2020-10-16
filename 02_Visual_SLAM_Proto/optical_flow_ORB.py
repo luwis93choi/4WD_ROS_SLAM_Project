@@ -67,9 +67,7 @@ while(1):
 
         np_old_correct_keypoints = np.array(correct_keypoints)
         ###########################################################################################################################
-
         current_keypoints, st, err = cv.calcOpticalFlowPyrLK(old_gray, frame_gray, np_old_correct_keypoints, None, **lk_params)
-
         good_new = current_keypoints[st==1]
         good_old = np_old_correct_keypoints[st==1]
     ################################################################################################################################
@@ -82,7 +80,7 @@ while(1):
 
     img = cv.add(frame.copy(), mask)
 
-    cv.imshow('frame', img)
+    cv.imshow('ORB-based Optical Flow + ReTracking', img)
     k = cv.waitKey(30) & 0xff
     if k == 27:
         break
