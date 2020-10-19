@@ -53,7 +53,7 @@ class mono_VO_ORBFlow_KITTI:
         self.orb = cv.ORB_create()
 
         # Optical Flow Parameters
-        self.lk_params = dict( winSize  = (15,15),
+        self.lk_params = dict( winSize  = (15, 15),
                                maxLevel = 2,
                                criteria = (cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 10, 0.03))
 
@@ -448,6 +448,31 @@ class mono_VO_ORBFlow_KITTI:
             print(self.pose_R)
 
             return self.pose_T, self.pose_R
+
+    def optimizePose_bundle_adjustment(self):
+        # Local Bundle Optimization (Only between 2 camera poses)
+
+        # Bundle Adjustment Optimizer
+        BA_optimizer = BundleAdjustment()
+
+        baseline = np.linalg.norm(self.prev_pose_T - self.pose_T)
+        #baseline = 0.0
+
+        BA_optimizer.add_pose(0, g2o.Quaternion(self.prev_pose_R), self.prev_pose_T.ravel(), self.fx, self.fy, self.cx, self.cy, baseline)
+        BA_optimizer.add_pose(1, g2o.Quaternion(self.pose_R), self.pose_T.ravel(), self.fx, self.fy, self.cx, self.cy, baseline)
+        
+        #for i in range(math.floor(len(prev_current_cloud)/5)):
+        for i in range(len(self.prev_current_cloud)):
+            BA_optimizer.add_point(i+2, self.prev_current_cloud[i])
+        
+        #for i in range(math.floor(len(common_current_keypoints)/5)):
+        for i in range(len(self.img_features_buffer[1])):
+            BA_optimizer.add_edge(point_id=i+2, pose_id=0, measurement=self.img_features_buffer[1][i][0])
+            BA_optimizer.add_edge(point_id=i+2, pose_id=1, measurement=self.img_features_buffer[2][i][0])
+
+        BA_optimizer.optimize(max_iteration=100)
+        
+        return BA_optimizer.get_pose(1).translation().T, BA_optimizer.get_pose(1).rotation().R
 
     def update(self):
 

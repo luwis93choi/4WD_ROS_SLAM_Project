@@ -17,6 +17,7 @@ while True:
             VO_KITTI.img_common3Dcloud_triangulate()
             VO_KITTI.pose_estimate()
             VO_KITTI.update()
+            VO_KITTI.optimizePose_bundle_adjustment()
 
             # Draw the trajectory 
             plt.title('KITTI Dataset - Monocular Visual Odometry (Relative Translation Scaling)\n[ORB-based Optical Flow]')
