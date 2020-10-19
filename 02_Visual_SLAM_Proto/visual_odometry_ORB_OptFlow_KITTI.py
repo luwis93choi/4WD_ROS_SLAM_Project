@@ -53,7 +53,7 @@ class mono_VO_ORBFlow_KITTI:
         self.orb = cv.ORB_create()
 
         # Optical Flow Parameters
-        self.lk_params = dict( winSize  = (21, 21),
+        self.lk_params = dict( winSize  = (15, 15),
                                maxLevel = 3,
                                criteria = (cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 30, 0.01))
 
@@ -87,14 +87,6 @@ class mono_VO_ORBFlow_KITTI:
         self.pprev_pose_R = np.array([[1, 0, 0],
                                       [0, 1, 0],
                                       [0, 0, 1]])
-
-        self.opt_pose_T = np.array([[0],
-                                    [0],
-                                    [0]])
-
-        self.opt_pose_R = np.array([[1, 0, 0],
-                                    [0, 1, 0],
-                                    [0, 0, 1]])
 
         self.pprev_prev_cloud = None
         self.prev_current_cloud = None
@@ -166,7 +158,7 @@ class mono_VO_ORBFlow_KITTI:
             print('[INFO] 1st image')
 
             query_img = cv.imread(self.dataset_path + self.images[self.dataset_current_idx])
-            
+
             pprev_gray = cv.cvtColor(query_img, cv.COLOR_BGR2GRAY)
             self.image_buffer[0] = pprev_gray
 
@@ -256,7 +248,8 @@ class mono_VO_ORBFlow_KITTI:
             print('current common num : ', len(self.img_features_buffer[2]))
 
             ### Feature Retracking over all 3 images ###################################################################################
-            if len(self.img_features_buffer[2]) < (self.initial_common_match_num * self.retracking_ratio):
+            #if len(self.img_features_buffer[2]) < (self.initial_common_match_num * self.retracking_ratio):
+            if len(self.img_features_buffer[2]) < 400:
                 print('[Re-Tracking] Not Enough Features between pprev and prev / Too many have been consumed')
 
                 ### pprev-prev ###
@@ -317,6 +310,38 @@ class mono_VO_ORBFlow_KITTI:
                 k = cv.waitKey(30)
 
             self.dataset_current_idx += 1
+
+    def keypoint_matchRefinement(self):
+
+        pprev_match_keypoints_pts = self.img_features_buffer[0]
+        prev_match_keypoints_pts = self.img_features_buffer[1]
+        current_match_keypoints_pts = self.img_features_buffer[2]
+
+        F_pprev_prev, mask = cv.findEssentialMat(np.int32(pprev_match_keypoints_pts), np.int32(prev_match_keypoints_pts), method=cv.FM_RANSAC, threshold=0.5, prob=0.999)
+        F_prev_current, mask = cv.findEssentialMat(np.int32(prev_match_keypoints_pts), np.int32(current_match_keypoints_pts), method=cv.FM_RANSAC, threshold=0.5, prob=0.999)
+        
+        temp_pprev = np.reshape(pprev_match_keypoints_pts, (1, len(pprev_match_keypoints_pts), 2))
+        temp_prev = np.reshape(prev_match_keypoints_pts, (1, len(prev_match_keypoints_pts), 2))
+        temp_current = np.reshape(current_match_keypoints_pts, (1, len(current_match_keypoints_pts), 2))
+
+        optimized_pprev, optimized_prev = cv.correctMatches(F_pprev_prev, temp_pprev, temp_prev)
+        optimized_prev, optimized_current = cv.correctMatches(F_prev_current, temp_prev, temp_current)
+
+        optimized_pprev_keypoints = []
+        optimized_prev_keypoints = []
+        optimized_current_keypoints = []
+        for i in range(len(current_match_keypoints_pts)):
+            optimized_pprev_keypoints.append([optimized_pprev[0][i]])
+            optimized_prev_keypoints.append([optimized_prev[0][i]])
+            optimized_current_keypoints.append([optimized_current[0][i]])
+
+        optimized_pprev_keypoints = np.array(optimized_pprev_keypoints)
+        optimized_prev_keypoints = np.array(optimized_prev_keypoints)
+        optimized_current_keypoints = np.array(optimized_current_keypoints)
+
+        self.img_features_buffer[0] = optimized_pprev_keypoints
+        self.img_features_buffer[1] = optimized_prev_keypoints
+        self.img_features_buffer[2] = optimized_current_keypoints
 
     def geometric_change_calc(self):
         
@@ -448,7 +473,7 @@ class mono_VO_ORBFlow_KITTI:
         # Absolute value of Z is compared to absolute value of Y and X. Absolute value is used to make this condition work under both foward and backward movements of the camera.
         if ( (abs(self.geometric_unit_changes['T_prev_current'][2]) > abs(self.geometric_unit_changes['T_prev_current'][0])) and
              (abs(self.geometric_unit_changes['T_prev_current'][2]) > abs(self.geometric_unit_changes['T_prev_current'][1])) ):
-            self.pose_T = self.prev_pose_T + T_relative_scale * self.prev_pose_R.dot(self.geometric_unit_changes['T_prev_current'])
+            self.pose_T = self.prev_pose_T + absolute_scale * self.prev_pose_R.dot(self.geometric_unit_changes['T_prev_current'])
             self.pose_R = self.geometric_unit_changes['R_prev_current'].dot(self.prev_pose_R)
 
             print('[INFO] Dominant Forward : Pose Estimation Results')
