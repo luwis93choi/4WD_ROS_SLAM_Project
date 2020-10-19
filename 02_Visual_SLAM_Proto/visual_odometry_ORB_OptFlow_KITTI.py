@@ -50,7 +50,7 @@ class mono_VO_ORBFlow_KITTI:
         self.processing_Stage = '1st'
 
         # ORB Feature Extractor
-        self.orb = cv.ORB_create()
+        self.orb = cv.ORB_create(nfeatures=2000)
 
         # Optical Flow Parameters
         self.lk_params = dict( winSize  = (15, 15),
@@ -249,7 +249,7 @@ class mono_VO_ORBFlow_KITTI:
 
             ### Feature Retracking over all 3 images ###################################################################################
             #if len(self.img_features_buffer[2]) < (self.initial_common_match_num * self.retracking_ratio):
-            if len(self.img_features_buffer[2]) < 400:
+            if len(self.img_features_buffer[2]) < 1000:
                 print('[Re-Tracking] Not Enough Features between pprev and prev / Too many have been consumed')
 
                 ### pprev-prev ###
@@ -404,8 +404,8 @@ class mono_VO_ORBFlow_KITTI:
             ### Triangluation between pprev and prev
             # The canonical matrix (set as the origin)
             P0 = np.array([[1, 0, 0, 0],
-                        [0, 1, 0, 0],
-                        [0, 0, 1, 0]])
+                           [0, 1, 0, 0],
+                           [0, 0, 1, 0]])
             P0 = self.intrinsic_CAM_Mat.dot(P0)
             # Rotated and translated using P0 as the reference point
             P1 = np.hstack((Rotation_Mat_pprev_prev, Translation_Mat_pprev_prev))
@@ -473,7 +473,7 @@ class mono_VO_ORBFlow_KITTI:
         # Absolute value of Z is compared to absolute value of Y and X. Absolute value is used to make this condition work under both foward and backward movements of the camera.
         if ( (abs(self.geometric_unit_changes['T_prev_current'][2]) > abs(self.geometric_unit_changes['T_prev_current'][0])) and
              (abs(self.geometric_unit_changes['T_prev_current'][2]) > abs(self.geometric_unit_changes['T_prev_current'][1])) ):
-            self.pose_T = self.prev_pose_T + absolute_scale * self.prev_pose_R.dot(self.geometric_unit_changes['T_prev_current'])
+            self.pose_T = self.prev_pose_T + T_relative_scale * self.prev_pose_R.dot(self.geometric_unit_changes['T_prev_current'])
             self.pose_R = self.geometric_unit_changes['R_prev_current'].dot(self.prev_pose_R)
 
             print('[INFO] Dominant Forward : Pose Estimation Results')

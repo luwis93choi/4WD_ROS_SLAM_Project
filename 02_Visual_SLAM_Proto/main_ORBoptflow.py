@@ -18,10 +18,10 @@ while True:
             VO_KITTI.img_common3Dcloud_triangulate()
             VO_KITTI.pose_estimate()
             VO_KITTI.update()
-            VO_KITTI.optimizePose_bundle_adjustment(opt_num=10)
+            #VO_KITTI.optimizePose_bundle_adjustment(opt_num=10)
             
             # Draw the trajectory 
-            plt.title('KITTI Dataset - Monocular Visual Odometry (Absolute Translation Scaling (GroundTruth IMU))\n[ORB-based Optical Flow]')
+            plt.title('KITTI Dataset - Monocular Visual Odometry (Relative Translation Scaling)\n[ORB-based Optical Flow]')
             plt.plot(VO_KITTI.pose_T[0][0], VO_KITTI.pose_T[2][0], 'ro')
             
             # Draw the groundtruth
