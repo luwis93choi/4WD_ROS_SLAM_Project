@@ -53,9 +53,9 @@ class mono_VO_ORBFlow_KITTI:
         self.orb = cv.ORB_create()
 
         # Optical Flow Parameters
-        self.lk_params = dict( winSize  = (15, 15),
-                               maxLevel = 2,
-                               criteria = (cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 10, 0.03))
+        self.lk_params = dict( winSize  = (21, 21),
+                               maxLevel = 3,
+                               criteria = (cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 30, 0.01))
 
         self.init_optical = True
         self.init_cloud = True
@@ -87,6 +87,14 @@ class mono_VO_ORBFlow_KITTI:
         self.pprev_pose_R = np.array([[1, 0, 0],
                                       [0, 1, 0],
                                       [0, 0, 1]])
+
+        self.opt_pose_T = np.array([[0],
+                                    [0],
+                                    [0]])
+
+        self.opt_pose_R = np.array([[1, 0, 0],
+                                    [0, 1, 0],
+                                    [0, 0, 1]])
 
         self.pprev_prev_cloud = None
         self.prev_current_cloud = None
@@ -449,7 +457,7 @@ class mono_VO_ORBFlow_KITTI:
 
             return self.pose_T, self.pose_R
 
-    def optimizePose_bundle_adjustment(self):
+    def optimizePose_bundle_adjustment(self, opt_num=1):
         # Local Bundle Optimization (Only between 2 camera poses)
 
         # Bundle Adjustment Optimizer
@@ -470,7 +478,12 @@ class mono_VO_ORBFlow_KITTI:
             BA_optimizer.add_edge(point_id=i+2, pose_id=0, measurement=self.img_features_buffer[1][i][0])
             BA_optimizer.add_edge(point_id=i+2, pose_id=1, measurement=self.img_features_buffer[2][i][0])
 
-        BA_optimizer.optimize(max_iteration=100)
+        BA_optimizer.optimize(max_iteration=opt_num)
+        
+        self.opt_pose_T = np.array([[BA_optimizer.get_pose(1).translation().T[0]],
+                                    [BA_optimizer.get_pose(1).translation().T[1]],
+                                    [BA_optimizer.get_pose(1).translation().T[2]]])
+        self.opt_pose_R = BA_optimizer.get_pose(1).rotation().R
         
         return BA_optimizer.get_pose(1).translation().T, BA_optimizer.get_pose(1).rotation().R
 

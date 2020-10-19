@@ -17,16 +17,17 @@ while True:
             VO_KITTI.img_common3Dcloud_triangulate()
             VO_KITTI.pose_estimate()
             VO_KITTI.update()
-            VO_KITTI.optimizePose_bundle_adjustment()
-
+            #VO_KITTI.optimizePose_bundle_adjustment(opt_num=10)
+            
             # Draw the trajectory 
             plt.title('KITTI Dataset - Monocular Visual Odometry (Relative Translation Scaling)\n[ORB-based Optical Flow]')
             #plt.title('KITTI Dataset - Monocular Visual Odometry (Relative Translation Scaling)\n[ORB-based Optical Flow]\n[g2o Local Bundle Adjustment proto]\n[Levenberg Masquardt Solver / 2 poses with multiple common 3D point clouds]')
             #plt.scatter(pose_T[0][0], pose_T[2][0], c='red')
             plt.plot(VO_KITTI.pose_T[0][0], VO_KITTI.pose_T[2][0], 'ro')
 
+            plt.plot(VO_KITTI.opt_pose_T[0][0], VO_KITTI.opt_pose_T[2][0], 'go')
+
             # Draw the groundtruth
-            #plt.scatter(VO_KITTI.ground_truth_T[VO_KITTI.dataset_current_idx-1][0], VO_KITTI.ground_truth_T[VO_KITTI.dataset_current_idx-1][2], c='blue')
             plt.plot(VO_KITTI.ground_truth_T[VO_KITTI.dataset_current_idx-1][0], VO_KITTI.ground_truth_T[VO_KITTI.dataset_current_idx-1][2], 'bo')
 
             plt.pause(0.000001)
