@@ -53,8 +53,7 @@ class mono_VO_ORBFlow_KITTI:
         self.orb = cv.ORB_create(nfeatures=2000)
 
         # Optical Flow Parameters
-        self.lk_params = dict( winSize  = (15, 15),
-                               maxLevel = 3,
+        self.lk_params = dict( winSize  = (21, 21),
                                criteria = (cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 30, 0.01))
 
         self.init_optical = True
@@ -291,7 +290,7 @@ class mono_VO_ORBFlow_KITTI:
             # Display Optical Flow results if the display option is True
             if disp_img == True:
 
-                color = np.random.randint(0, 255, (2000, 3)) 
+                color = np.random.randint(0, 255, (4500, 3)) 
 
                 query_img = cv.imread(self.dataset_path + self.images[self.dataset_current_idx-1])
                 
@@ -310,38 +309,6 @@ class mono_VO_ORBFlow_KITTI:
                 k = cv.waitKey(30)
 
             self.dataset_current_idx += 1
-
-    def keypoint_matchRefinement(self):
-
-        pprev_match_keypoints_pts = self.img_features_buffer[0]
-        prev_match_keypoints_pts = self.img_features_buffer[1]
-        current_match_keypoints_pts = self.img_features_buffer[2]
-
-        F_pprev_prev, mask = cv.findEssentialMat(np.int32(pprev_match_keypoints_pts), np.int32(prev_match_keypoints_pts), method=cv.FM_RANSAC, threshold=0.5, prob=0.999)
-        F_prev_current, mask = cv.findEssentialMat(np.int32(prev_match_keypoints_pts), np.int32(current_match_keypoints_pts), method=cv.FM_RANSAC, threshold=0.5, prob=0.999)
-        
-        temp_pprev = np.reshape(pprev_match_keypoints_pts, (1, len(pprev_match_keypoints_pts), 2))
-        temp_prev = np.reshape(prev_match_keypoints_pts, (1, len(prev_match_keypoints_pts), 2))
-        temp_current = np.reshape(current_match_keypoints_pts, (1, len(current_match_keypoints_pts), 2))
-
-        optimized_pprev, optimized_prev = cv.correctMatches(F_pprev_prev, temp_pprev, temp_prev)
-        optimized_prev, optimized_current = cv.correctMatches(F_prev_current, temp_prev, temp_current)
-
-        optimized_pprev_keypoints = []
-        optimized_prev_keypoints = []
-        optimized_current_keypoints = []
-        for i in range(len(current_match_keypoints_pts)):
-            optimized_pprev_keypoints.append([optimized_pprev[0][i]])
-            optimized_prev_keypoints.append([optimized_prev[0][i]])
-            optimized_current_keypoints.append([optimized_current[0][i]])
-
-        optimized_pprev_keypoints = np.array(optimized_pprev_keypoints)
-        optimized_prev_keypoints = np.array(optimized_prev_keypoints)
-        optimized_current_keypoints = np.array(optimized_current_keypoints)
-
-        self.img_features_buffer[0] = optimized_pprev_keypoints
-        self.img_features_buffer[1] = optimized_prev_keypoints
-        self.img_features_buffer[2] = optimized_current_keypoints
 
     def geometric_change_calc(self):
         
@@ -399,21 +366,21 @@ class mono_VO_ORBFlow_KITTI:
         Rotation_Mat_prev_current = self.geometric_unit_changes['R_prev_current']
         Translation_Mat_prev_current = self.geometric_unit_changes['T_prev_current']
 
-        if self.init_cloud == True:
-            print('[INFO] pprev-prev Triangulation')
-            ### Triangluation between pprev and prev
-            # The canonical matrix (set as the origin)
-            P0 = np.array([[1, 0, 0, 0],
-                           [0, 1, 0, 0],
-                           [0, 0, 1, 0]])
-            P0 = self.intrinsic_CAM_Mat.dot(P0)
-            # Rotated and translated using P0 as the reference point
-            P1 = np.hstack((Rotation_Mat_pprev_prev, Translation_Mat_pprev_prev))
-            P1 = self.intrinsic_CAM_Mat.dot(P1)
+        #if self.init_cloud == True:
+        print('[INFO] pprev-prev Triangulation')
+        ### Triangluation between pprev and prev
+        # The canonical matrix (set as the origin)
+        P0 = np.array([[1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                        [0, 0, 1, 0]])
+        P0 = self.intrinsic_CAM_Mat.dot(P0)
+        # Rotated and translated using P0 as the reference point
+        P1 = np.hstack((Rotation_Mat_pprev_prev, Translation_Mat_pprev_prev))
+        P1 = self.intrinsic_CAM_Mat.dot(P1)
 
-            self.pprev_prev_cloud = cv.triangulatePoints(P0, P1, pprev_match_keypoints_pts, prev_match_keypoints_pts).reshape(-1, 4)[:, :3]
+        self.pprev_prev_cloud = cv.triangulatePoints(P0, P1, pprev_match_keypoints_pts, prev_match_keypoints_pts).reshape(-1, 4)[:, :3]
 
-            self.init_cloud = False
+        self.init_cloud = False
 
         print('[INFO] prev-current Triangulation')
         ### Triangluation between prev and current
@@ -427,18 +394,6 @@ class mono_VO_ORBFlow_KITTI:
         P1 = self.intrinsic_CAM_Mat.dot(P1)
 
         self.prev_current_cloud = cv.triangulatePoints(P0, P1, prev_match_keypoints_pts, current_match_keypoints_pts).reshape(-1, 4)[:, :3]
-
-        
-        # Remove the triangulation results with negative Z value 
-        # (Remove the triangulation values that are projected behind image plane)
-        #corrected_pprev_prev_cloud = []
-        #corrected_prev_current_cloud = []
-        #for i in range(len(pprev_prev_cloud)):
-        #    if (pprev_prev_cloud[i][2] >= 0) and (prev_current_cloud[i][2] >= 0):
-        #        corrected_pprev_prev_cloud.append(pprev_prev_cloud[i])
-        #        corrected_prev_current_cloud.append(prev_current_cloud[i])
-        #
-        #return corrected_pprev_prev_cloud, corrected_prev_current_cloud
         
         return self.pprev_prev_cloud, self.prev_current_cloud
 
