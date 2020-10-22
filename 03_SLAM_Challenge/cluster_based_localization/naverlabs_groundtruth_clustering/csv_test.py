@@ -46,7 +46,7 @@ valid_loader = DataLoader(dataset=valid_dataset,
 
 PROCESSOR = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-model = torch.load('./vgg19_2020-07-23 21:12:28.491704.pth')
+model = torch.load('./vgg19_1F_2020-07-28 12:27:24.041907.pth')
 
 model.eval()
 

@@ -29,13 +29,19 @@ import os
 import sys
 
 from dataset_split import dataset_splitter
-
+'''
 full_dataset_path_list = [
     './dataset_1F.csv',
     './dataset_B1.csv'
 ]
-
+'''
+full_dataset_path_list = [
+    './dataset_B1.csv'
+]
+'''
 nn_type = ['1F', 'B1']
+'''
+nn_type = ['B1']
 type_index = 0
 
 ### Split dataset
@@ -47,8 +53,8 @@ print(datasets)
 for datasetpath in datasets:
 
     ### Prepare Dataloader
-    BATCH_SIZE = 16
-    EPOCH = 100
+    BATCH_SIZE = 32
+    EPOCH = 200
     resolution = [224, 224]
 
     transform = transforms.Compose([
@@ -85,7 +91,7 @@ for datasetpath in datasets:
 
     ### Prepare Neural Network
     cluster_labels = []
-    with open('./dataset_1F.csv', 'r', encoding='utf-8') as dataset_file:
+    with open('./dataset_B1.csv', 'r', encoding='utf-8') as dataset_file:
 
         reader = csv.DictReader(dataset_file)
 
@@ -176,7 +182,7 @@ for datasetpath in datasets:
         plt.title('Traning Results - Loss Value')
         plt.xlabel('Training Batch Num')
         plt.ylabel('Loss')
-        plt.savefig('./Training Results ' + epoch_complete_time + '.png')
+        plt.savefig('./Training Results ' + nn_type[type_index] + '_'  + epoch_complete_time + '.png')
 
     type_index += 1
 
