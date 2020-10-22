@@ -1,1 +1,0 @@
-Feature Detection : Looking for the regions in the image which have maximum variation when moved (by small amount) in all regions around it
